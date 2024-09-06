@@ -22,7 +22,7 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
   final DateFormat _dateFormat = DateFormat('yyyy-MM-dd');
   final DateFormat _timeFormat = DateFormat('HH:mm');
   Uuid uuid = Uuid();
-  String? _userName, _hostId; // Holds the current logged-in user's name
+  String? _userName, _hostId; // Holds the current logged-in user's name and user/host id
 
   @override
   void initState() {
@@ -35,6 +35,7 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
     setState(() {
       _userName = prefs.getString('userName') ?? 'Unknown Host'; // Fallback if user not found
       _hostId = prefs.getString('userId') ?? '';
+      debugPrint("=====Create Party Screen: $_hostId");
     });
   }
 
@@ -84,7 +85,7 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
               TextFormField(
                 controller: _maxAttendeesController,
                 decoration: const InputDecoration(labelText: 'Max Attendees'),
-                keyboardType: TextInputType.number,
+                keyboardType: TextInputType.phone,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter maximum number of attendees';
@@ -101,6 +102,7 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
                 onTap: () => _selectDateTime(context),
                 child: AbsorbPointer(
                   child: TextFormField(
+                    keyboardType: TextInputType.none,
                     decoration: InputDecoration(
                       labelText: 'Date & Time',
                       hintText: _selectedDateTime != null
@@ -124,12 +126,13 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
                       hostName: _userName ?? 'Unknown Host', // Set host as the logged-in user
                       hostID: _hostId ?? '',
                     );
+                    debugPrint("====Check party object: ${party.hostID} || ${party.hostName}");
 
                     PartyService().createParty(party).then((_) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Party Created')),
                       );
-                      Navigator.pop(context); // Go back to previous screen
+                      Navigator.pop(context, true);// Go back to previous screen
                     });
                   }
                 },

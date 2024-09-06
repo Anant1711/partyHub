@@ -3,7 +3,7 @@ class Party {
   final String id;
   final String name;
   final String description;
-  final String dateTime; // Use String
+  final String dateTime;
   final String location;
   final int maxAttendees;
   final List<String> attendees;
