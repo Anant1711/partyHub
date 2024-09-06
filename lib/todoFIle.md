@@ -6,3 +6,4 @@
 5. Add functionality to reject or accept attendees request.
 6. Add tags: non-alcohol / alcohol , females only, hybrid etc.s
 7. refresh join party screen as soon as some one press join.
+8. Make UI more attractive [Least Priority]
