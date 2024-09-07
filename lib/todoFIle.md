@@ -7,3 +7,4 @@
 - [ ] Add tags: non-alcohol / alcohol , females only, hybrid etc.s
 - [X] Refresh join party screen as soon as some one press join.
 - [ ] Make UI more attractive **[Least Priority]**
+- [ ] Parties created by host should not shown to host itself.
