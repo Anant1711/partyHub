@@ -53,7 +53,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       this.username = _nameController.text.toString();
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HomeScreen(username: '$username',)),
+        MaterialPageRoute(builder: (context) => HomeScreen()),
       );
     }
   }
