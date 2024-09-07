@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:clique/models/createParty.dart';
 import 'package:clique/services/party_service.dart';
 import 'package:uuid/uuid.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // For storing and retrieving user session
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CreatePartyScreen extends StatefulWidget {
   const CreatePartyScreen({super.key});
