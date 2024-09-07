@@ -61,6 +61,16 @@ class _HomeScreenState extends State<HomeScreen> {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
             child: const Text('Create a Party'),
           ),
+      Card(
+        margin: const EdgeInsets.symmetric(vertical: 8.0),
+        child: ListTile(
+          onTap: () {
+            // Add functionality for tapping
+          },
+          title: Text("AD"),
+          subtitle: Text("Need to be Implement"),
+        ),
+      ),
         ],
       ),
     );
@@ -69,6 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: _getSelectedScreen(), // Show selected screen based on bottom bar selection
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
