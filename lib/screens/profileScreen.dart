@@ -1,23 +1,16 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:clique/screens/MyPartiesScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'MyPartiesScreen.dart';
+import 'package:clique/services/AuthService.dart';
+import '../main.dart';
 
 class ProfileScreen extends StatelessWidget {
-  // Future method to get the username
   Future<String?> getUserName() async {
     try {
-      // Get the SharedPreferences instance
       SharedPreferences prefs = await SharedPreferences.getInstance();
-
-      // Retrieve the username from SharedPreferences
       String? username = prefs.getString('userName');
-
-      // Return the username or null if not found
       return username;
     } catch (e) {
-      // Handle any errors that might occur
       print("Error retrieving username: $e");
       return null;
     }
@@ -43,9 +36,9 @@ class ProfileScreen extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 50,
-                    backgroundImage: NetworkImage(
-                        'https://example.com/your-avatar-url.jpg'), // Replace with user's avatar URL
+                    child: Image.asset('assets/pic.png'), // Replace with user's avatar URL
                   ),
+
                   SizedBox(height: 20),
                   Text(snapshot.data ?? 'No username found'), // Display username
                   SizedBox(height: 20),
@@ -53,41 +46,22 @@ class ProfileScreen extends StatelessWidget {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => MyPartiesScreen()), // Replace with your screen to show user's parties
+                        MaterialPageRoute(builder: (context) => MyPartiesScreen()),
                       );
                     },
                     child: Text('My Parties'),
                   ),
                   ElevatedButton(
-                    onPressed: () {
-                      // Add your logout logic here
-                      final confirmation =  showDialog(
-                        context: context,
-                        builder: (context) {
-                          return AlertDialog(
-                            title: const Text('Log Out?'),
-                            content: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              // children: [
-                              //   Text(snapshot.data ?? 'No username found',style: TextStyle(fontSize: 20),),
-                              //   const SizedBox(height: 10),
-                              // ],
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(false),
-                                child: const Text('Cancel'),
-                              ),
-                              ElevatedButton(
-                                onPressed: () => Navigator.of(context).pop(true),
-                                child: const Text('Confirm'),
-                              ),
-                            ],
-                          );
-                        },
-                      );
+                    onPressed: () async {
+                      bool? confirmation = await _showLogoutConfirmationDialog(context);
                       if (confirmation == true) {
-                        FirebaseAuth.instance.signOut();
+                        // Use the AuthService to sign out
+                        await AuthService().signOut();
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(builder: (context) => AuthenticationWrapper()),  // Replace with your main app screen
+                              (Route<dynamic> route) => false,
+                        );
                       }
                     },
                     child: Text('Logout'),
@@ -100,6 +74,28 @@ class ProfileScreen extends StatelessWidget {
           },
         ),
       ),
+    );
+  }
+
+  Future<bool?> _showLogoutConfirmationDialog(BuildContext context) async {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Log Out?'),
+          content: const Text('Are you sure you want to log out?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Confirm'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
