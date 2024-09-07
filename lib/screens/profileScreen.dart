@@ -19,9 +19,7 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Profile'),
-      ),
+      backgroundColor: Colors.white,
       body: Center(
         child: FutureBuilder<String?>(
           future: getUserName(),
