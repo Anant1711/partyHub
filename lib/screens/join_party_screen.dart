@@ -3,6 +3,8 @@ import 'package:clique/services/party_service.dart';
 import 'package:clique/models/createParty.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/UserService.dart';
+import '../utility/commonutility.dart';
+
 
 class JoinPartyScreen extends StatefulWidget {
   const JoinPartyScreen({super.key});
@@ -12,31 +14,49 @@ class JoinPartyScreen extends StatefulWidget {
 }
 
 class _JoinPartyScreenState extends State<JoinPartyScreen> {
+   CommonUtility commonUtility = CommonUtility();
   late Future<List<Party>> _partiesFuture;
   late Future<Map<String, String>> _usernamesFuture;
 
   @override
   void initState() {
     super.initState();
-    _partiesFuture = PartyService().getParties();
+    _partiesFuture = _getFilteredParties();
+  }
+
+  Future<List<Party>> _getFilteredParties() async {
+    final parties = await PartyService().getParties();
+    final userId = await _getUserId();
+
+    // Filter out parties created by the current user
+    return parties.where((party) => party.hostID != userId).toList();
   }
 
   Future<void> _confirmJoinParty(Party party, String userName, String userId) async {
+    // Fetch all usernames for the attendees
+    final usernames = await UserService().getAllUsernames(party.attendees);
+
+    final attendeesNames = party.attendees
+        .map((userId) => usernames[userId] ?? 'Unknown')
+        .join(', ');
+
     final confirmation = await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: Text('Join ${party.name}?'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Host Name: ${party.hostName}'),
-              Text('Location: ${party.location}'),
-              Text('Date & Time: ${party.dateTime}'),
-              Text('Other Attendees: \n${party.attendees.join(', ')}'),
-              const SizedBox(height: 16),
-              Text('Your name: $userName'),
-            ],
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildDetailRow('Host Name:', party.hostName),
+                _buildDetailRow('Location:', party.location),
+                _buildDetailRow('Date & Time:', party.dateTime),
+                _buildDetailRow("Attendees Name:",attendeesNames.isNotEmpty ? attendeesNames : 'No attendees yet',),
+                _buildDetailRow('Your name:', userName),
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -86,7 +106,7 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
           const SnackBar(content: Text('Successfully joined the party')),
         );
         setState(() {
-          _partiesFuture = PartyService().getParties();
+          _partiesFuture = _getFilteredParties(); // Refresh the parties list
         });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -103,7 +123,9 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         title: const Text('Join a Party'),
       ),
       body: FutureBuilder<List<Party>>(
@@ -140,6 +162,7 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
                       final hasJoined = userId != null && party.attendees.contains(userId);
 
                       return Card(
+                        color: Colors.white70,
                         margin: const EdgeInsets.symmetric(vertical: 8.0),
                         child: ListTile(
                           onTap: () {
@@ -162,6 +185,7 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
                                 );
                               }
                             },
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
                             child: const Text('Join'),
                           ))
                               : const Text('Full', style: TextStyle(color: Colors.red, fontSize: 18)),
@@ -187,6 +211,25 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString('userName');
   }
+   Widget _buildDetailRow(String label, String value) {
+     return Padding(
+       padding: const EdgeInsets.symmetric(vertical: 4.0),
+       child: Row(
+         crossAxisAlignment: CrossAxisAlignment.start,
+         children: [
+           Expanded(
+             child: Text(
+               label,
+               style: TextStyle(fontWeight: FontWeight.bold),
+             ),
+           ),
+           Expanded(
+             child: Text(value),
+           ),
+         ],
+       ),
+     );
+   }
 
   void popUp(Party party) {
     showDialog(
@@ -197,8 +240,8 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Date and Time: ${party.dateTime}\n'),
-              Text('Location: ${party.location}\n'),
+              _buildDetailRow('Date and Time:', party.dateTime),
+              _buildDetailRow('Location:', party.location),
               FutureBuilder<Map<String, String>>(
                 future: _usernamesFuture,
                 builder: (context, snapshot) {
@@ -213,7 +256,7 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
                     final attendeeNames = party.attendees
                         .map((userId) => usernames[userId] ?? 'Unknown')
                         .join(', ');
-                    return Text('Attendees Name: $attendeeNames\n');
+                    return _buildDetailRow('Attendees Name: ', attendeeNames);
                   }
                 },
               ),
