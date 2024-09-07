@@ -42,7 +42,9 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         title: const Text('Create a Party'),
       ),
       body: Padding(
