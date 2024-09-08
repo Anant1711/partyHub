@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UserService {
@@ -31,6 +32,16 @@ class UserService {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? username = prefs.getString('userName');
       return username;
+    } catch (e) {
+      print("Error retrieving username: $e");
+      return null;
+    }
+  }
+  Future<String?> getUserId() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? userId = prefs.getString('userId');
+      return userId;
     } catch (e) {
       print("Error retrieving username: $e");
       return null;

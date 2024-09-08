@@ -4,36 +4,39 @@ import 'package:clique/services/UserService.dart'; // Your user service
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/createParty.dart';
+import '../services/UserService.dart';
 
-class MyPartiesScreen extends StatefulWidget {
+class JoinedPartiesScreen extends StatefulWidget {
   @override
-  _MyPartiesScreenState createState() => _MyPartiesScreenState();
+  _JoinedPartiesScreenState createState() => _JoinedPartiesScreenState();
 }
 
-class _MyPartiesScreenState extends State<MyPartiesScreen> {
-  late Future<List<Party>> _myPartiesFuture;
+class _JoinedPartiesScreenState extends State<JoinedPartiesScreen> {
+  late Future<List<Party>> _joinedPartiesFuture;
   late Future<Map<String, String>> _usernamesFuture;
-  PartyService partyService = PartyService();
   String? _userId;
 
   @override
   void initState() {
     super.initState();
-    _myPartiesFuture = _loadMyParties();
+    _joinedPartiesFuture = _loadJoinedParties();
   }
 
-  Future<List<Party>> _loadMyParties() async {
+  Future<List<Party>> _loadJoinedParties() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? userId = prefs.getString('userId');
-    debugPrint("User ID in Parties Screen: $userId");
+    debugPrint("User ID in Joined Parties Screen: $userId");
     this._userId = userId;
     if (userId != null) {
-      final parties = await partyService.getUserParties(userId);
+      final parties = await PartyService().getParties(); // Get all parties
 
-      // Get all userIDs from the attendees list
-      final userIds = parties.expand((party) => party.attendees).toSet().toList();
+      // Filter parties where the user is an attendee
+      final joinedParties = parties.where((party) => party.attendees.contains(userId)).toList();
+
+      // Get all user IDs from the attendees of the joined parties
+      final userIds = joinedParties.expand((party) => party.attendees).toSet().toList();
       _usernamesFuture = UserService().getAllUsernames(userIds); // Get all usernames
-      return parties;
+      return joinedParties;
     } else {
       return [];
     }
@@ -45,19 +48,19 @@ class _MyPartiesScreenState extends State<MyPartiesScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: Text('My Parties', style: TextStyle(color: Colors.black)),
+        title: const Text('Upcoming Parties', style: TextStyle(color: Colors.black)),
         iconTheme: IconThemeData(color: Colors.black),
         elevation: 0,
       ),
       body: FutureBuilder<List<Party>>(
-        future: _myPartiesFuture,
+        future: _joinedPartiesFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('No parties created'));
+            return Center(child: Text('You have not joined any parties'));
           } else {
             final parties = snapshot.data!;
             return FutureBuilder<Map<String, String>>(
@@ -72,57 +75,24 @@ class _MyPartiesScreenState extends State<MyPartiesScreen> {
                 } else {
                   final usernames = usernameSnapshot.data!;
                   return ListView.builder(
-                    padding: EdgeInsets.all(10.0),
                     itemCount: parties.length,
                     itemBuilder: (context, index) {
                       final party = parties[index];
                       final attendeeNames = party.attendees
                           .map((userId) => usernames[userId] ?? 'Unknown')
                           .join(', ');
-
                       return Card(
-                        elevation: 5,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15.0),
-                        ),
-                        margin: EdgeInsets.symmetric(vertical: 10.0),
+                        margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         child: ListTile(
-                          contentPadding: EdgeInsets.all(15),
-                          title: Text(
-                            party.name,
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          onTap: () {
+                            popUp(party);
+                          },
+                          title: Text(party.name, style: TextStyle(fontWeight: FontWeight.bold)),
+                          subtitle: Text(
+                            '${party.dateTime} \n${party.location} \nAttendees: $attendeeNames',
+                            style: TextStyle(height: 1.5),
                           ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              SizedBox(height: 10),
-                              Row(
-                                children: [
-                                  Icon(Icons.calendar_today, size: 16),
-                                  SizedBox(width: 5),
-                                  Text(party.dateTime, style: TextStyle(fontSize: 14)),
-                                ],
-                              ),
-                              SizedBox(height: 10),
-                              Row(
-                                children: [
-                                  Icon(Icons.location_on, size: 16),
-                                  SizedBox(width: 5),
-                                  Text(party.location, style: TextStyle(fontSize: 14)),
-                                ],
-                              ),
-                              SizedBox(height: 10),
-                              Row(
-                                children: [
-                                  Icon(Icons.people, size: 16),
-                                  SizedBox(width: 5),
-                                  Text('Attendees: $attendeeNames', style: TextStyle(fontSize: 14)),
-                                ],
-                              ),
-                            ],
-                          ),
-                          trailing: Icon(Icons.arrow_forward_ios),
-                          onTap: () => popUp(party),
+                          trailing: Icon(Icons.arrow_forward_ios_sharp),
                         ),
                       );
                     },
@@ -169,26 +139,9 @@ class _MyPartiesScreenState extends State<MyPartiesScreen> {
             ],
           ),
           actions: [
-            Row(
-              children: [
-                TextButton(
-                  onPressed: () => {
-                    partyService.deleteParty(party.id),
-                    Navigator.of(context).pop(),
-                  // Re-trigger the party list reload
-                  setState(() {
-                  _myPartiesFuture = _loadMyParties();
-                  }),
-
-                },
-                  child: const Text('Delete',style: TextStyle(color: Colors.red)),
-
-                ),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text('Ok'),
-                ),
-              ],
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Ok'),
             ),
           ],
         );
@@ -215,5 +168,4 @@ class _MyPartiesScreenState extends State<MyPartiesScreen> {
       ),
     );
   }
-
 }
