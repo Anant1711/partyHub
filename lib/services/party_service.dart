@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:clique/models/createParty.dart';
 import 'package:uuid/uuid.dart';
-
 import '../models/joinRequestModel.dart';
 
 class PartyService {
@@ -26,6 +25,24 @@ class PartyService {
     debugPrint("Get all Party");
     QuerySnapshot snapshot = await _firestore.collection(PREF_NAME).get();
     return snapshot.docs.map((doc) => Party.fromMap(doc.data() as Map<String, dynamic>)).toList();
+  }
+
+  //Get party by ID
+  Future<Party?> getPartyByID(String partyID) async {
+    QuerySnapshot snapshot = await _firestore.collection(PREF_NAME)
+        .where('id', isEqualTo: partyID)
+        .get();
+
+    if (snapshot.docs.isNotEmpty) {
+      // Get the first document from the query snapshot
+      DocumentSnapshot documentSnapshot = snapshot.docs.first;
+
+      // Convert the document snapshot into a Party object
+      return Party.fromDocument(documentSnapshot);
+    } else {
+      // Return null if no documents were found
+      return null;
+    }
   }
 
   //Get specific user's parties
@@ -81,6 +98,7 @@ class PartyService {
   }
 
 
+  //For Host
   Future<List<Map<String, dynamic>>> getJoinRequests(String hostId) async {
     try {
       final querySnapshot = await _firestore
@@ -97,7 +115,6 @@ class PartyService {
       throw Exception('Error fetching join requests: $e');
     }
   }
-
 
   // Update the join request status
   Future<void> updateJoinRequest(String DocId, String partyId, String status) async {
@@ -136,6 +153,27 @@ class PartyService {
   Future<void> deleteRequest(String requestId) async {
     debugPrint("Deleting a Request");
     await _firestore.collection(REQUEST_COLLECTION).doc(requestId).delete();
+  }
+
+  /////////////////////////////// Pending Request //////////////////////////////////////
+
+  //get Pending Request
+  Future<List<Map<String, dynamic>>> getPendingRequests(String userId) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection(REQUEST_COLLECTION)
+          .where('status', isEqualTo: "Pending")
+          .where('userId',isEqualTo: userId)
+          .get();
+
+      return querySnapshot.docs.map((doc) {
+        final data = doc.data();
+        data['DocId'] = doc.id; // Add the document ID to the data
+        return data;
+      }).toList();
+    } catch (e) {
+      throw Exception('Error fetching pending requests: $e');
+    }
   }
 
 }

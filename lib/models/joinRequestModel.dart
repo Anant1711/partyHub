@@ -15,17 +15,19 @@ class JoinRequest {
     required this.timestamp,
   });
 
+  // Convert JoinRequest object to Map for storing in the database
   Map<String, dynamic> toMap() {
     return {
       'userId': userId,
       'userName': userName,
-      'hostId':hostId,
+      'hostId': hostId,
       'status': status,
       'partyId': partyId,
       'timestamp': timestamp.toIso8601String(),
     };
   }
 
+  // Create a JoinRequest object from a Map (useful when retrieving data from the database)
   factory JoinRequest.fromMap(Map<String, dynamic> map) {
     return JoinRequest(
       userId: map['userId'],

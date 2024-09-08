@@ -1,3 +1,4 @@
+import 'package:clique/screens/PendingRequest.dart';
 import 'package:clique/utility/CommonUtility.dart';
 import 'package:flutter/material.dart';
 import '../services/UserService.dart';
@@ -72,6 +73,7 @@ class ProfileScreen extends StatelessWidget {
                         trailing: Icon(Icons.arrow_forward_ios),
                       ),
                       Divider(),
+
                       ListTile(
                         leading: Icon(Icons.upcoming_sharp, color: Colors.blue),
                         title: const Text('Upcoming Parties'),
@@ -84,6 +86,24 @@ class ProfileScreen extends StatelessWidget {
                         trailing: Icon(Icons.arrow_forward_ios),
                       ),
                       Divider(),
+
+                      ListTile(
+                        leading: Icon(Icons.watch_later_outlined, color: Colors.blue),
+                        title: const Text('Pending Requests'),
+                        onTap: () {
+                          debugPrint("in Profile Screen: $userId");
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PendingRequestsScreen(userId: userId ?? ""),
+                            ),
+                          );
+                        },
+                        trailing: Icon(Icons.arrow_forward_ios),
+                      ),
+                      Divider(),
+
+
                       ListTile(
                         leading: Icon(Icons.request_page, color: Colors.blue),
                         title: const Text('Request'),
@@ -91,7 +111,6 @@ class ProfileScreen extends StatelessWidget {
                           debugPrint("in Profile Screen: $userId");
                           Navigator.push(
                             context,
-
                             MaterialPageRoute(
                               builder: (context) => ManageJoinRequestsScreen(hostId: userId ?? ""),
                             ),
@@ -100,6 +119,7 @@ class ProfileScreen extends StatelessWidget {
                         trailing: Icon(Icons.arrow_forward_ios),
                       ),
                       Divider(),
+
                       ListTile(
                         leading: Icon(Icons.logout, color: Colors.red),
                         title: Text('Logout'),
@@ -134,6 +154,7 @@ class ProfileScreen extends StatelessWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: Colors.white,
           title: Text(title),
           content: Text(content),
           actions: [

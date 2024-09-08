@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Party {
   final String id;
   final String name;
@@ -39,6 +41,26 @@ class Party {
   }
 
   factory Party.fromMap(Map<String, dynamic> map) {
+    return Party(
+      id: map['id'] as String? ?? '',
+      name: map['name'] as String? ?? 'Unnamed Party',
+      description: map['description'] as String? ?? '',
+      dateTime: map['dateTime'] as String? ?? '',
+      location: map['location'] as String? ?? 'Unknown Location',
+      maxAttendees: map['maxAttendees'] as int? ?? 0,
+      attendees: map['attendees'] != null
+          ? List<String>.from(map['attendees'] as List)
+          : [],
+      hostName: map['hostName'] as String? ?? '',
+      hostID: map['hostid'] as String? ?? '',
+      pendingRequests: map['pendingRequests'] != null
+          ? List<String>.from(map['pendingRequests'] as List)
+          : [],
+    );
+  }
+
+  factory Party.fromDocument(DocumentSnapshot doc) {
+    final map = doc.data() as Map<String, dynamic>;
     return Party(
       id: map['id'] as String? ?? '',
       name: map['name'] as String? ?? 'Unnamed Party',
