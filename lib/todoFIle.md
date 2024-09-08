@@ -9,4 +9,6 @@
 - [ ] Make UI more attractive **[Least Priority]**
 - [X] Parties created by host should not shown to host itself.
 - [X] Section for Upcoming Parties
+- [X] On-tap on Tile in join party screen, need to update status value (Pending/Joined)
+- [X] Reflect Joined, Pending, join button on join party Screen
 - [ ] GPS, location, for getting nearby parties.
