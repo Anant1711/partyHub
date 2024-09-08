@@ -4,6 +4,9 @@
 - [X] If user already joined one party, then he/she can't join again same party.
 - [X] All parties should display at home screen as scrollable list items.
 - [ ] Add functionality to reject or accept attendees request.
-- [ ] Add tags: non-alcohol / alcohol , females only, hybrid etc.s
+- [ ] Add tags: non-alcohol / alcohol , females only, hybrid etc.
 - [X] Refresh join party screen as soon as some one press join.
 - [ ] Make UI more attractive **[Least Priority]**
+- [X] Parties created by host should not shown to host itself.
+- [X] Section for Upcoming Parties
+- [ ] GPS, location, for getting nearby parties.

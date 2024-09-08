@@ -141,11 +141,16 @@ class AuthScreenState extends State<AuthScreen> {
           debugPrint("User exists: ${user.email}");
           _fetchAndStoreUserData();
           String? userName = userDoc['name'] as String?;
+          debugPrint("============IN Auth Screen=========>>>>>: $userName");
           // User is found in Firestore, navigate to the main screen
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => HomeScreen(username: '$userName',)),
+            MaterialPageRoute(
+              builder: (context) => HomeScreen(),
+            ),
           );
+
+
         } else {
           debugPrint("User does not exist in Firestore.");
           // User is not found, navigate to profile setup screen

@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:clique/services/party_service.dart';
 import 'package:clique/models/createParty.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../services/UserService.dart';
+import '../utility/commonutility.dart';
+
 
 class JoinPartyScreen extends StatefulWidget {
   const JoinPartyScreen({super.key});
@@ -13,31 +14,49 @@ class JoinPartyScreen extends StatefulWidget {
 }
 
 class _JoinPartyScreenState extends State<JoinPartyScreen> {
+   CommonUtility commonUtility = CommonUtility();
   late Future<List<Party>> _partiesFuture;
   late Future<Map<String, String>> _usernamesFuture;
 
   @override
   void initState() {
     super.initState();
-    _partiesFuture = PartyService().getParties();
+    _partiesFuture = _getFilteredParties();
+  }
+
+  Future<List<Party>> _getFilteredParties() async {
+    final parties = await PartyService().getParties();
+    final userId = await _getUserId();
+
+    // Filter out parties created by the current user
+    return parties.where((party) => party.hostID != userId).toList();
   }
 
   Future<void> _confirmJoinParty(Party party, String userName, String userId) async {
+    // Fetch all usernames for the attendees
+    final usernames = await UserService().getAllUsernames(party.attendees);
+
+    final attendeesNames = party.attendees
+        .map((userId) => usernames[userId] ?? 'Unknown')
+        .join(', ');
+
     final confirmation = await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: Text('Join ${party.name}?'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Host Name: ${party.hostName}'),
-              Text('Location: ${party.location}'),
-              Text('Date & Time: ${party.dateTime}'),
-              Text('Other Attendees: \n${party.attendees.join(', ')}'),
-              const SizedBox(height: 16),
-              Text('Your name: $userName'),
-            ],
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildDetailRow('Host Name:', party.hostName),
+                _buildDetailRow('Location:', party.location),
+                _buildDetailRow('Date & Time:', party.dateTime),
+                _buildDetailRow("Attendees Name:",attendeesNames.isNotEmpty ? attendeesNames : 'No attendees yet',),
+                _buildDetailRow('Your name:', userName),
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -77,7 +96,7 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
           dateTime: party.dateTime,
           location: party.location,
           maxAttendees: party.maxAttendees,
-          attendees: List.from(party.attendees)..add(userId), // Add userID
+          attendees: List.from(party.attendees)..add(userId),
           hostName: party.hostName,
           hostID: party.hostID,
         );
@@ -87,7 +106,7 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
           const SnackBar(content: Text('Successfully joined the party')),
         );
         setState(() {
-          _partiesFuture = PartyService().getParties(); // Refresh the parties list
+          _partiesFuture = _getFilteredParties(); // Refresh the parties list
         });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -101,11 +120,12 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         title: const Text('Join a Party'),
       ),
       body: FutureBuilder<List<Party>>(
@@ -120,17 +140,16 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
           } else {
             final parties = snapshot.data!;
 
-            //get all userID from attendees list
+            // Get all user IDs from attendees list
             final userIds = parties.expand((party) => party.attendees).toSet().toList();
-            _usernamesFuture = UserService().getAllUsernames(userIds); //get all usernames
-            debugPrint(_usernamesFuture.toString());
+            _usernamesFuture = UserService().getAllUsernames(userIds);
+
             return ListView.builder(
               itemCount: parties.length,
               itemBuilder: (context, index) {
                 final party = parties[index];
                 final availableSeats = party.maxAttendees - party.attendees.length;
 
-                // Use async method to get user ID
                 return FutureBuilder<String?>(
                   future: _getUserId(),
                   builder: (context, userSnapshot) {
@@ -142,30 +161,35 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
                       final userId = userSnapshot.data;
                       final hasJoined = userId != null && party.attendees.contains(userId);
 
-                      return ListTile(
-                        onTap: (){
-                          popUp(party);
-                        },
-                        title: Text(party.name),
-                        subtitle: Text('${party.dateTime} \n${party.location}\nAvailable Seats: $availableSeats'),
-                        trailing: availableSeats > 0
-                            ? (hasJoined
-                            ? const Text('Joined', style: TextStyle(color: Colors.green, fontSize: 18))
-                            : ElevatedButton(
-                          onPressed: () async {
-                            String? userName = await _getUserName();
-
-                            if (userId != null && userName != null) {
-                              _confirmJoinParty(party, userName, userId);
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('User not logged in. Please log in again.')),
-                              );
-                            }
+                      return Card(
+                        color: Colors.white70,
+                        margin: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: ListTile(
+                          onTap: () {
+                            popUp(party);
                           },
-                          child: const Text('Join'),
-                        ))
-                            : const Text('Full', style: TextStyle(color: Colors.red, fontSize: 18)),
+                          title: Text(party.name),
+                          subtitle: Text('${party.dateTime} \n${party.location}\nAvailable Seats: $availableSeats'),
+                          trailing: availableSeats > 0
+                              ? (hasJoined
+                              ? const Text('Joined', style: TextStyle(color: Colors.green, fontSize: 18))
+                              : ElevatedButton(
+                            onPressed: () async {
+                              String? userName = await _getUserName();
+
+                              if (userId != null && userName != null) {
+                                _confirmJoinParty(party, userName, userId);
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('User not logged in. Please log in again.')),
+                                );
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
+                            child: const Text('Join'),
+                          ))
+                              : const Text('Full', style: TextStyle(color: Colors.red, fontSize: 18)),
+                        ),
                       );
                     }
                   },
@@ -178,19 +202,35 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
     );
   }
 
-// Async method to get user ID from SharedPreferences
   Future<String?> _getUserId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString('userId');
   }
 
-// Async method to get user name from SharedPreferences
   Future<String?> _getUserName() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString('userName');
   }
+   Widget _buildDetailRow(String label, String value) {
+     return Padding(
+       padding: const EdgeInsets.symmetric(vertical: 4.0),
+       child: Row(
+         crossAxisAlignment: CrossAxisAlignment.start,
+         children: [
+           Expanded(
+             child: Text(
+               label,
+               style: TextStyle(fontWeight: FontWeight.bold),
+             ),
+           ),
+           Expanded(
+             child: Text(value),
+           ),
+         ],
+       ),
+     );
+   }
 
-  //Pop-up
   void popUp(Party party) {
     showDialog(
       context: context,
@@ -200,23 +240,23 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Date and Time: ${party.dateTime}\n'),
-              Text('Location: ${party.location}\n'),
+              _buildDetailRow('Date and Time:', party.dateTime),
+              _buildDetailRow('Location:', party.location),
               FutureBuilder<Map<String, String>>(
                 future: _usernamesFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
+                    return const Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
                     return Text('Error: ${snapshot.error}');
                   } else if (!snapshot.hasData) {
-                    return Text('Error loading usernames');
+                    return const Text('Error loading usernames');
                   } else {
                     final usernames = snapshot.data!;
                     final attendeeNames = party.attendees
                         .map((userId) => usernames[userId] ?? 'Unknown')
                         .join(', ');
-                    return Text('Total Attendees: $attendeeNames\n');
+                    return _buildDetailRow('Attendees Name: ', attendeeNames);
                   }
                 },
               ),
@@ -232,6 +272,4 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
       },
     );
   }
-
-
 }

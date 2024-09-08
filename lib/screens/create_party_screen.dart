@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:clique/models/createParty.dart';
 import 'package:clique/services/party_service.dart';
 import 'package:uuid/uuid.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // For storing and retrieving user session
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CreatePartyScreen extends StatefulWidget {
   const CreatePartyScreen({super.key});
@@ -42,7 +42,9 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         title: const Text('Create a Party'),
       ),
       body: Padding(
