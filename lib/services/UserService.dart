@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UserService {
@@ -8,8 +9,8 @@ class UserService {
     final Map<String, String> usernames = {};
 
     try {
-      final userDocs = await Future.wait(userIds.map((userId) =>
-          _firestore.collection('users').doc(userId).get()));
+      final userDocs = await Future.wait(userIds
+          .map((userId) => _firestore.collection('users').doc(userId).get()));
 
       for (var doc in userDocs) {
         if (doc.exists) {
@@ -36,4 +37,39 @@ class UserService {
       return null;
     }
   }
+
+  Future<String?> getUserId() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? userId = prefs.getString('userId');
+      return userId;
+    } catch (e) {
+      print("Error retrieving username: $e");
+      return null;
+    }
+  }
+
+  Future<String?> getUserNameByID(String userID) async {
+    // Fetch the documents where 'userID' matches the provided userID
+    QuerySnapshot querySnapshot = await _firestore
+        .collection("users")
+        .where('userID', isEqualTo: userID)
+        .get();
+
+    // Check if any documents were returned
+    if (querySnapshot.docs.isNotEmpty) {
+      // Get the first document from the query snapshot
+      DocumentSnapshot documentSnapshot = querySnapshot.docs.first;
+
+      // Extract the 'name' field from the document data
+      String? name = documentSnapshot.get('name');
+
+      // Return the extracted name
+      return name;
+    } else {
+      // Return null if no documents were found
+      return null;
+    }
+  }
+
 }

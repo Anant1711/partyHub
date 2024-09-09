@@ -1,12 +1,19 @@
 # Todo
 - [ ] Add camera/selfie for verification
 - [ ] Add profile image upload option
-- [X] If user already joined one party, then he/she can't join again same party.
-- [X] All parties should display at home screen as scrollable list items.
-- [ ] Add functionality to reject or accept attendees request.
+- [X] ~If user already joined one party, then he/she can't join again same party.~
+- [X] ~All parties should display at home screen as scrollable list items.~
+- [X] ~Add functionality to reject or accept attendees request.~
+- [ ] 🔴 Authentication part -> Check if email is valid or not, make user only after taking Full Name. **[High Priority]**
+- [ ] 🔴 Phone Auth implementation. **[High Priority]**
 - [ ] Add tags: non-alcohol / alcohol , females only, hybrid etc.
-- [X] Refresh join party screen as soon as some one press join.
-- [ ] Make UI more attractive **[Least Priority]**
-- [X] Parties created by host should not shown to host itself.
-- [X] Section for Upcoming Parties
+- [X] ~Refresh join party screen as soon as some one press join.~
+- [X] ~Parties created by host should not shown to host itself.~
+- [X] ~Section for Upcoming Parties~
+- [X] ~On-tap on Tile in join party screen, need to update status value (Pending/Joined)~
+- [X] ~Reflect Joined, Pending, join button on join party Screen~
+- [x] ~Fix Date and Time visibility on TextForm field.~
+- [ ] Trim extra space while entering email in Auth screen.
 - [ ] GPS, location, for getting nearby parties.
+- [ ] Separate Date and Time.
+- [ ] Make UI more attractive **[Least Priority]**

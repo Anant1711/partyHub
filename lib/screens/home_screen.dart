@@ -97,8 +97,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.orangeAccent,
+        selectedItemColor: Colors.black,
         unselectedItemColor: Colors.grey,
+        selectedIconTheme: IconThemeData(color: Colors.black,applyTextScaling: true),
         onTap: _onItemTapped, // Handle item tap
       ),
     );

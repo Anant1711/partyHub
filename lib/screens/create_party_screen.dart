@@ -21,8 +21,11 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
   DateTime? _selectedDateTime;
   final DateFormat _dateFormat = DateFormat('yyyy-MM-dd');
   final DateFormat _timeFormat = DateFormat('HH:mm');
+  // Create a TextEditingController to manage the input field
+  final TextEditingController _dateTimeController = TextEditingController();
   Uuid uuid = Uuid();
-  String? _userName, _hostId; // Holds the current logged-in user's name and user/host id
+  String? _userName,
+      _hostId; // Holds the current logged-in user's name and user/host id
 
   @override
   void initState() {
@@ -33,7 +36,8 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
   Future<void> _getCurrentUser() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      _userName = prefs.getString('userName') ?? 'Unknown Host'; // Fallback if user not found
+      _userName = prefs.getString('userName') ??
+          'Unknown Host'; // Fallback if user not found
       _hostId = prefs.getString('userId') ?? '';
       debugPrint("=====Create Party Screen: $_hostId");
     });
@@ -104,12 +108,10 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
                 onTap: () => _selectDateTime(context),
                 child: AbsorbPointer(
                   child: TextFormField(
-                    keyboardType: TextInputType.none,
+                    controller: _dateTimeController, // Assign the controller
                     decoration: InputDecoration(
                       labelText: 'Date & Time',
-                      hintText: _selectedDateTime != null
-                          ? '${_dateFormat.format(_selectedDateTime!)} ${_timeFormat.format(_selectedDateTime!)}'
-                          : 'Select date and time',
+                      hintText: 'Select date and time',
                     ),
                   ),
                 ),
@@ -122,24 +124,30 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
                       id: uuid.v4(), // Unique ID
                       name: _nameController.text,
                       description: _descriptionController.text,
-                      dateTime: _selectedDateTime?.toIso8601String() ?? DateTime.now().toIso8601String(),
+                      dateTime: _selectedDateTime?.toIso8601String() ??
+                          DateTime.now().toIso8601String(),
                       location: _locationController.text,
                       maxAttendees: int.parse(_maxAttendeesController.text),
-                      hostName: _userName ?? 'Unknown Host', // Set host as the logged-in user
+                      hostName: _userName ??
+                          'Unknown Host', // Set host as the logged-in user
                       hostID: _hostId ?? '',
                     );
-                    debugPrint("====Check party object: ${party.hostID} || ${party.hostName}");
+                    debugPrint(
+                        "====Check party object: ${party.hostID} || ${party.hostName}");
 
                     PartyService().createParty(party).then((_) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Party Created')),
                       );
-                      Navigator.pop(context, true);// Go back to previous screen
+                      Navigator.pop(
+                          context, true); // Go back to previous screen
                     });
                   }
                 },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple),
-                child: const Text('Create Party', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurple),
+                child: const Text('Create Party',
+                    style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
@@ -149,35 +157,38 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
   }
 
   Future<void> _selectDateTime(BuildContext context) async {
-    final DateTime now = DateTime.now();
-    final DateTime initialDate = _selectedDateTime ?? now;
-
-    // Select Date
+    // Select the date first
     final DateTime? selectedDate = await showDatePicker(
       context: context,
-      initialDate: initialDate,
-      firstDate: DateTime(now.year, now.month, now.day),
-      lastDate: DateTime(now.year + 5),
+      initialDate: _selectedDateTime ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
     );
 
-    if (selectedDate != null && selectedDate != initialDate) {
-      // Select Time
-      final TimeOfDay? selectedTime = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.fromDateTime(initialDate),
-      );
+    if (selectedDate == null) return; // User canceled
 
-      if (selectedTime != null) {
-        setState(() {
-          _selectedDateTime = DateTime(
-            selectedDate.year,
-            selectedDate.month,
-            selectedDate.day,
-            selectedTime.hour,
-            selectedTime.minute,
-          );
-        });
-      }
-    }
+    // Then select the time
+    final TimeOfDay? selectedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_selectedDateTime ?? DateTime.now()),
+    );
+
+    if (selectedTime == null) return; // User canceled
+
+    // Combine the selected date and time
+    final DateTime selectedDateTime = DateTime(
+      selectedDate.year,
+      selectedDate.month,
+      selectedDate.day,
+      selectedTime.hour,
+      selectedTime.minute,
+    );
+
+    // Update the state and TextFormField
+    setState(() {
+      _selectedDateTime = selectedDateTime;
+      _dateTimeController.text =
+          '${_dateFormat.format(_selectedDateTime!)} ${_timeFormat.format(_selectedDateTime!)}';
+    });
   }
 }
