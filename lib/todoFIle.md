@@ -8,7 +8,7 @@
 - [ ] Add tags: non-alcohol / alcohol , females only, hybrid etc.
 - [X] Refresh join party screen as soon as some one press join.
 - [X] Parties created by host should not shown to host itself.
-- [X] Section for Upcoming Parties
+- [X] ~Section for Upcoming Parties~
 - [X] On-tap on Tile in join party screen, need to update status value (Pending/Joined)
 - [X] Reflect Joined, Pending, join button on join party Screen
 - [ ] GPS, location, for getting nearby parties.
