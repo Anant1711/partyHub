@@ -4,7 +4,8 @@
 - [X] ~If user already joined one party, then he/she can't join again same party.~
 - [X] ~All parties should display at home screen as scrollable list items.~
 - [X] ~Add functionality to reject or accept attendees request.~
-- [ ] Authentication part -> Check if email is valid or not, make user only after taking Full Name. **[High Priority]**
+- [ ] 🔴 Authentication part -> Check if email is valid or not, make user only after taking Full Name. **[High Priority]**
+- [ ] 🔴 Phone Auth implementation. **[High Priority]**
 - [ ] Add tags: non-alcohol / alcohol , females only, hybrid etc.
 - [X] ~Refresh join party screen as soon as some one press join.~
 - [X] ~Parties created by host should not shown to host itself.~
