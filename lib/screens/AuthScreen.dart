@@ -26,41 +26,49 @@ class AuthScreenState extends State<AuthScreen> {
   bool _isSignUp = false;
 
 
-  // // Method for phone authentication
-  // void _verifyPhoneNumber() async {
-  //   await _auth.verifyPhoneNumber(
-  //     phoneNumber: _phoneController.text,
-  //     verificationCompleted: (PhoneAuthCredential credential) async {
-  //       // Phone auth auto-completed
-  //     },
-  //     verificationFailed: (FirebaseAuthException e) {
-  //       _showMessage('Phone verification failed: ${e.message}');
-  //     },
-  //     codeSent: (String verificationId, int? resendToken) {
-  //       _verificationId = verificationId;
-  //       _showMessage('OTP sent to your phone');
-  //     },
-  //     codeAutoRetrievalTimeout: (String verificationId) {
-  //       _verificationId = verificationId;
-  //     },
-  //   );
-  // }
-  //
-  // // Method to sign in with OTP after receiving the code
-  // void _signInWithOTP() async {
-  //   final credential = PhoneAuthProvider.credential(
-  //     verificationId: _verificationId,
-  //     smsCode: _otpController.text,
-  //   );
-  //   try {
-  //     await _auth.signInWithCredential(credential);
-  //     _navigateToProfileOrHome();
-  //   } catch (e) {
-  //     _showMessage('Failed to sign in: $e');
-  //   }
-  // }
+  // Method for phone authentication
+  void _verifyPhoneNumber() async {
+    await _auth.verifyPhoneNumber(
+      phoneNumber: _phoneController.text,
+      verificationCompleted: (PhoneAuthCredential credential) async {
+        // Phone auth auto-completed
+        print(credential);
+        print(credential.smsCode);
+        _showMessage("Phone Verification Completed.");
+      },
+      verificationFailed: (FirebaseAuthException e) {
+        print(e.message);
+        if (e.code == 'invalid-phone-number') {
+          print('The provided phone number is not valid.');
+        }
+        _showMessage('Phone verification failed: ${e.message}');
+      },
+      codeSent: (String verificationId, int? resendToken) {
+        _verificationId = verificationId;
+        print("OTP SENT");
+        _showMessage('OTP sent to your phone');
+      },
+      codeAutoRetrievalTimeout: (String verificationId) {
+        _verificationId = verificationId;
+      },
+    );
+  }
 
-  // Method to sign up new users with email and password
+  // Method to sign in with OTP after receiving the code
+  void _signInWithOTP() async {
+    final credential = PhoneAuthProvider.credential(
+      verificationId: _verificationId,
+      smsCode: _otpController.text,
+    );
+    try {
+      await _auth.signInWithCredential(credential);
+      _navigateToProfileSetup();
+    } catch (e) {
+      _showMessage('Failed to sign in: $e');
+    }
+  }
+
+ // Method to sign up new users with email and password
 
   Future<void> _signUpWithEmailPassword() async {
     bool status = true;
@@ -298,3 +306,4 @@ class AuthScreenState extends State<AuthScreen> {
   }
 
 }
+
