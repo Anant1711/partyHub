@@ -48,7 +48,7 @@ class _JoinedPartiesScreenState extends State<JoinedPartiesScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: const Text('Upcoming Parties', style: TextStyle(color: Colors.black)),
+        title: const Text('Upcoming Parties', style: TextStyle(fontWeight: FontWeight.bold)),
         iconTheme: IconThemeData(color: Colors.black),
         elevation: 0,
       ),
