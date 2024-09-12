@@ -1,6 +1,7 @@
 # Todo
 - [ ] Add camera/selfie for verification
 - [ ] Add profile image upload option
+- [ ] Create a public Profile view
 - [ ] Authentication part -> Check if email is valid or not, make user only after taking Full Name. **[High Priority]**
 - [ ] GPS, location, for getting nearby parties. **[High Priority]** **[Important]**
 - [ ] Make UI more attractive **[Least Priority]**
