@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:clique/services/party_service.dart'; // Your party service
 import 'package:clique/services/UserService.dart'; // Your user service
+import 'package:intl/intl.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../models/createParty.dart';
-import '../services/UserService.dart';
 
 class JoinedPartiesScreen extends StatefulWidget {
   @override
@@ -56,7 +56,7 @@ class _JoinedPartiesScreenState extends State<JoinedPartiesScreen> {
         future: _joinedPartiesFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return Center(child: LoadingAnimationWidget.fallingDot(color: const Color(0xff2226BA), size: 50));
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -67,7 +67,7 @@ class _JoinedPartiesScreenState extends State<JoinedPartiesScreen> {
               future: _usernamesFuture,
               builder: (context, usernameSnapshot) {
                 if (usernameSnapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
+                  return Center(child: LoadingAnimationWidget.fallingDot(color: const Color(0xff2226BA), size: 50));
                 } else if (usernameSnapshot.hasError) {
                   return Center(child: Text('Error: ${usernameSnapshot.error}'));
                 } else if (!usernameSnapshot.hasData) {
@@ -81,15 +81,18 @@ class _JoinedPartiesScreenState extends State<JoinedPartiesScreen> {
                       final attendeeNames = party.attendees
                           .map((userId) => usernames[userId] ?? 'Unknown')
                           .join(', ');
+                      DateTime parsedDateTime = DateTime.parse(party.dateTime);
+                      String date = DateFormat('dd-MM-yyyy').format(parsedDateTime);
+                      String time = DateFormat('hh:mm a').format(parsedDateTime);
                       return Card(
                         margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         child: ListTile(
                           onTap: () {
-                            popUp(party);
+                            popUp(party,parsedDateTime);
                           },
                           title: Text(party.name, style: TextStyle(fontWeight: FontWeight.bold)),
                           subtitle: Text(
-                            '${party.dateTime} \n${party.location} \nAttendees: $attendeeNames',
+                            '${date} , ${time} \n${party.location} \nAttendees: $attendeeNames',
                             style: TextStyle(height: 1.5),
                           ),
                           trailing: Icon(Icons.arrow_forward_ios_sharp),
@@ -106,7 +109,7 @@ class _JoinedPartiesScreenState extends State<JoinedPartiesScreen> {
     );
   }
 
-  void popUp(Party party) {
+  void popUp(Party party,DateTime parsedDateTime) {
     showDialog(
       context: context,
       builder: (context) {
@@ -116,13 +119,16 @@ class _JoinedPartiesScreenState extends State<JoinedPartiesScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildDetailRow('Date and Time: ', party.dateTime),
+              _buildDetailRow('Date:', DateFormat('dd-MM-yyyy').format(parsedDateTime)),
+
+              // Display Time separately
+              _buildDetailRow('Time:', DateFormat('hh:mm a').format(parsedDateTime)),
               _buildDetailRow('Location: ', party.location),
               FutureBuilder<Map<String, String>>(
                 future: _usernamesFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
+                    return Center(child: LoadingAnimationWidget.fallingDot(color: const Color(0xff2226BA), size: 50));
                   } else if (snapshot.hasError) {
                     return Text('Error: ${snapshot.error}');
                   } else if (!snapshot.hasData) {

@@ -1,5 +1,7 @@
 import 'package:clique/services/UserService.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import '../models/createParty.dart';
 import '../services/party_service.dart';
 
@@ -57,13 +59,13 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: const Text('Your Pending Requests'),
+        title: const Text('Your Pending Requests',style: TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _pendingRequestsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(child:LoadingAnimationWidget.fallingDot(color: const Color(0xff2226BA), size: 50));
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -75,7 +77,7 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
               future: _userNamesFuture,
               builder: (context, userNamesSnapshot) {
                 if (userNamesSnapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return Center(child: LoadingAnimationWidget.fallingDot(color: const Color(0xff2226BA), size: 50));
                 } else if (userNamesSnapshot.hasError) {
                   return Center(child: Text('Error: ${userNamesSnapshot.error}'));
                 } else if (!userNamesSnapshot.hasData) {
@@ -129,7 +131,7 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
     );
   }
 
-  void popUp(Party party,String Status) {
+  void popUp(Party party,String Status,DateTime parsedDateTime) {
     showDialog(
       context: context,
       builder: (context) {
@@ -139,7 +141,9 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildDetailRow('Date and Time: ', party.dateTime),
+              _buildDetailRow('Date:', DateFormat('yyyy-MM-dd').format(parsedDateTime)),
+              // Display Time separately
+              _buildDetailRow('Time:', DateFormat('hh:mm a').format(parsedDateTime)),
               _buildDetailRow('Location: ', party.location),
               _buildDetailRow('Status', Status),
             ],
@@ -160,15 +164,10 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
       // Await the result of the asynchronous method
       print("Party ID: $partyID");
       Party? party = await partyService.getPartyByID(partyID);
-
-      if (party != null) {
-        // Pass the Party object to your pop-up function
-        popUp(party,status);
-      } else {
-        // Handle the case where the party was not found
-        print('Party not found');
-      }
-    } catch (e) {
+      DateTime parsedDateTime = DateTime.parse(party!.dateTime);
+      // Pass the Party object to your pop-up function
+      popUp(party,status,parsedDateTime);
+        } catch (e) {
       // Handle any errors that occur during the fetch
       print('Error fetching party: $e');
     }

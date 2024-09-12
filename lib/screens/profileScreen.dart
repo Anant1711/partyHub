@@ -1,35 +1,62 @@
 import 'package:clique/screens/PendingRequest.dart';
 import 'package:clique/utility/CommonUtility.dart';
 import 'package:flutter/material.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import '../services/UserService.dart';
 import '../services/AuthService.dart';
 import 'package:clique/screens/MyPartiesScreen.dart';
 import 'package:clique/screens/request.dart';
-import 'package:clique/services/joinedParties.dart';
+import 'package:clique/screens/joinedParties.dart';
 import '../main.dart';
+import 'EditProfileScreen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
+  @override
+  _ProfileScreen createState() => _ProfileScreen();
+}
+class _ProfileScreen extends State<ProfileScreen>{
   UserService userService = UserService();
   final commonUtility = CommonUtility();
+  late Future<List<String?>> _userInfoFuture;
 
+  @override
+  void initState() {
+    super.initState();
+    _userInfoFuture = _fetchUserInfo();
+  }
+
+  //Refresh User info on ProfileScreen
+  void _refreshUserInfo() {
+    setState(() {
+      _userInfoFuture = _fetchUserInfo(); // This will trigger a rebuild
+    });
+  }
+
+  //Fetching UserInfo
+  Future<List<String?>> _fetchUserInfo() {
+    return Future.wait([
+      userService.getUserNamee(),
+      userService.getUserId(),
+    ]);
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xffEBEAEF),
       body: FutureBuilder<List<String?>>(
         future: Future.wait([
-          userService.getUserName(),
+          userService.getUserNamee(),
           userService.getUserId(),
         ]),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return Center(child: LoadingAnimationWidget.fallingDot(color: const Color(0xff2226BA), size: 50));
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (snapshot.hasData && snapshot.data != null) {
             final data = snapshot.data!;
-            final userName = data[0];
-            final userId = data[1];
+            var userName = data[0];
+            var userId = data[1];
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -50,11 +77,36 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 20),
-                Center(
-                  child: Text(
-                    userName ?? 'No username found',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center, // Center align the Row content
+                  children: [
+                    Text(
+                      userName ?? 'No username found',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(width: 10), // Space between text and edit button
+                    GestureDetector(
+                      onTap: () async{
+
+                        //EditScreen navigator
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => EditProfileScreen()),
+                        ).then((isUpdated) {
+                          if (isUpdated == true) {
+                            _refreshUserInfo(); //Refresh the profile info
+                          }
+                        });
+
+
+                      },
+                      child: const Icon(
+                        Icons.edit,
+                        size: 20,
+                        color: Colors.blue, // Customize the color of the edit icon
+                      ),
+                    ),
+                  ],
                 ),
                 SizedBox(height: 30),
                 Padding(
@@ -155,16 +207,17 @@ class ProfileScreen extends StatelessWidget {
       builder: (context) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          title: Text(title),
+          title: Text(title,style: TextStyle(fontWeight: FontWeight.bold)),
           content: Text(content),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
+              child: const Text('Cancel',style: TextStyle(color: Color(0xff4C46EB)),),
             ),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xff4C46EB)),
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Confirm'),
+              child: const Text('Confirm',style: TextStyle(color: Colors.white),),
             ),
           ],
         );
