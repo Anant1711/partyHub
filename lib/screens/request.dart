@@ -29,6 +29,7 @@ class _ManageJoinRequestsScreenState extends State<ManageJoinRequestsScreen> {
 
     if (action == 'approved') {
       await partyService.addUserToParty(partyId, userId);
+      await partyService.deleteFromPendingReq(partyId,userId);
       partyService.deleteRequest(requestId);
     }else if(action == 'rejected'){
       debugPrint("Rejected: $requestId");
@@ -44,9 +45,9 @@ class _ManageJoinRequestsScreenState extends State<ManageJoinRequestsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xffEBEAEF),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xffEBEAEF),
         title: const Text('Manage Join Requests',style: TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
@@ -65,14 +66,16 @@ class _ManageJoinRequestsScreenState extends State<ManageJoinRequestsScreen> {
               itemCount: requests.length,
               itemBuilder: (context, index) {
                 final request = requests[index];
-                final userId = request['userName'] ?? 'Unknown User';
+                final userName = request['userName'] ?? 'Unknown User';
                 final status = request['status'] ?? 'Unknown Status';
                 final DocId = request['DocId']; // Ensure the ID is fetched correctly
 
                 return Card(
-                  margin: const EdgeInsets.all(8.0),
+                  color: Colors.white,
+                  margin: const EdgeInsets.fromLTRB(
+                      17.0, 8.0, 17.0, 8.0),
                   child: ListTile(
-                    title: Text('Request from $userId',style: TextStyle(fontWeight: FontWeight.bold)),
+                    title: Text('Request from $userName',style: TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Text('Status: $status'),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -85,7 +88,7 @@ class _ManageJoinRequestsScreenState extends State<ManageJoinRequestsScreen> {
                               debugPrint('Request ID is null');
                             }
                           },
-                          child: const Text('Approve'),
+                          child: const Text('Approve',style: TextStyle(color: Color(0xff2226BA),fontWeight: FontWeight.bold),),
                         ),
                         TextButton(
                           onPressed: () {
@@ -95,7 +98,7 @@ class _ManageJoinRequestsScreenState extends State<ManageJoinRequestsScreen> {
                               debugPrint('Request ID is null');
                             }
                           },
-                          child: const Text('Reject'),
+                          child: const Text('Reject',style: TextStyle(color: Colors.red)),
                         ),
                       ],
                     ),

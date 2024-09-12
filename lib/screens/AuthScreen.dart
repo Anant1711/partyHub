@@ -14,7 +14,7 @@ class AuthScreen extends StatefulWidget {
 
 class AuthScreenState extends State<AuthScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-
+  final _formKey = GlobalKey<FormState>();
   // Controllers for email/password and phone/OTP inputs
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -69,7 +69,6 @@ class AuthScreenState extends State<AuthScreen> {
   }
 
  // Method to sign up new users with email and password
-
   Future<void> _signUpWithEmailPassword() async {
     bool status = true;
     try {
@@ -248,60 +247,312 @@ class AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Authentication',style: TextStyle(fontWeight: FontWeight.bold))),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            // Email & Password fields for sign-in or sign-up
-            if (!_isPhoneLogin) ...[
-              TextField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Email'),
-              ),
-              TextField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'Password'),
-              ),
-              ElevatedButton(
-                onPressed: _isSignUp
-                    ? _signUpWithEmailPassword
-                    : _signInWithEmailPassword,
-                child: Text(_isSignUp ? 'Sign Up' : 'Log In'),
-              ),
-
-              // "Forgot Password" Button
-              if (!_isSignUp)
-                TextButton(
-                  onPressed: (){
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => ForgotPasswordScreen()),
-                    );
-                  },
-                  child: Text('Forgot Password?'),
-                ),
-
-              // Toggle between sign-up and sign-in
-              TextButton(
-                onPressed: _toggleSignUp,
-                child: Text(_isSignUp
-                    ? 'Already have an account? Sign In'
-                    : 'Don’t have an account? Sign Up'),
-              ),
-            ],
-
-            // Toggle button to switch between email/password and phone login
-            TextButton(
-              onPressed: _toggleAuthMethod,
-              child: Text(
-                _isPhoneLogin ? 'Use Email/Password' : 'Use Phone Number instead',
-              ),
-            ),
-          ],
+      backgroundColor: const Color(0xffEBEAEF),
+      appBar: AppBar(
+        backgroundColor: const Color(0xffEBEAEF),
+        title: const Text(
+          'Authentication',
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Center(
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Phone or Email login toggle button
+                ElevatedButton.icon(
+
+                  icon: Icon(_isPhoneLogin ? Icons.email : Icons.phone,color: Colors.white,),
+                  label: Text(_isPhoneLogin
+                      ? 'Use Email/Password Instead'
+                      : 'Use Phone Number Instead',style: TextStyle(color: Colors.white),),
+                  onPressed: _toggleAuthMethod,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    padding: EdgeInsets.symmetric(vertical: 15),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Email and Password Login
+                if (!_isPhoneLogin)
+                  _buildEmailPasswordLogin(),
+
+                // Phone Login with OTP
+                if (_isPhoneLogin)
+                  _buildPhoneLogin(),
+
+                const SizedBox(height: 20),
+
+                // Sign up / Log in toggle button
+                TextButton(
+                  onPressed: _toggleSignUp,
+                  child: Text(
+                    _isSignUp
+                        ? 'Already have an account? Sign In'
+                        : 'Don’t have an account? Sign Up',
+                    style: const TextStyle(
+                      color: Colors.blue,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmailPasswordLogin() {
+    return Form(
+      key: _formKey,
+      child: Column(
+        children: [
+          TextFormField(
+            style: const TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.bold,
+            ),
+            controller: _emailController,
+            decoration: InputDecoration(
+              labelText: 'Email',
+              labelStyle: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.bold),
+              hintText: 'Your full email address',
+              hintStyle: TextStyle(color: Colors.grey[500]),
+              filled: true,
+              fillColor: Colors.white70,
+              prefixIcon:
+              const Icon(Icons.email_outlined, color: Colors.blueAccent),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide:
+                const BorderSide(color: Colors.grey, width: 1.5),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide:
+                BorderSide(color: Colors.blueAccent, width: 2),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.red, width: 1.5),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.red, width: 2),
+              ),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your email';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            style: const TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.bold,
+            ),
+            controller: _passwordController,
+            obscureText: true,
+            decoration: InputDecoration(
+              labelText: 'Password',
+              labelStyle: TextStyle(
+                  color: Colors.grey[700], fontWeight: FontWeight.bold),
+              hintText: 'Enter Your Password',
+              hintStyle: TextStyle(color: Colors.grey[500]),
+              filled: true,
+              fillColor: Colors.white70,
+              prefixIcon:
+              const Icon(Icons.password, color: Colors.blueAccent),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide:
+                const BorderSide(color: Colors.grey, width: 1.5),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide:
+                BorderSide(color: Colors.blueAccent, width: 2),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.red, width: 1.5),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.red, width: 2),
+              ),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your password';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: (){
+              FocusScope.of(context).unfocus();
+              if (_formKey.currentState?.validate() ?? false){
+                _isSignUp? _signUpWithEmailPassword():_signInWithEmailPassword();
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xff4C46EB),
+              padding: const EdgeInsets.symmetric(vertical: 16,horizontal: 35),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+                    _isSignUp ? 'Sign Up' : 'Log In',
+                    style: const TextStyle(fontSize: 16,color: Colors.white),
+            ),
+          ),
+          const SizedBox(height: 10),
+          if (!_isSignUp)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => ForgotPasswordScreen()),
+                  );
+                },
+                child: const Text('Forgot Password?'),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPhoneLogin() {
+    return Column(
+      children: [
+        TextField(
+          controller: _phoneController,
+          decoration: InputDecoration(
+            labelText: 'Phone Number',
+            labelStyle: TextStyle(
+                color: Colors.grey[700], fontWeight: FontWeight.bold),
+            hintText: 'Phone Number',
+            hintStyle: TextStyle(color: Colors.grey[500]),
+            filled: true,
+            fillColor: Colors.white70,
+            prefixIcon:
+            const Icon(Icons.email_outlined, color: Colors.blueAccent),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+              const BorderSide(color: Colors.grey, width: 1.5),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+              BorderSide(color: Colors.blueAccent, width: 2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.red, width: 1.5),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.red, width: 2),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        ElevatedButton(
+          onPressed: _verifyPhoneNumber,
+          child: const Text(
+            'Send OTP',
+            style: TextStyle(fontSize: 16,color: Colors.white),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xff4C46EB),
+            padding: const EdgeInsets.symmetric(vertical: 16,horizontal: 35),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _otpController,
+          decoration: InputDecoration(
+            labelText: 'OTP',
+            labelStyle: TextStyle(
+                color: Colors.grey[700], fontWeight: FontWeight.bold),
+            hintText: 'One Time Password',
+            hintStyle: TextStyle(color: Colors.grey[500]),
+            filled: true,
+            fillColor: Colors.white70,
+            prefixIcon:
+            const Icon(Icons.email_outlined, color: Colors.blueAccent),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+              const BorderSide(color: Colors.grey, width: 1.5),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+              BorderSide(color: Colors.blueAccent, width: 2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.red, width: 1.5),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.red, width: 2),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        ElevatedButton(
+          onPressed: _signInWithOTP,
+          child: const Text(
+            'Verify OTP',
+            style: TextStyle(fontSize: 16,color: Colors.white),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xff4C46EB),
+            padding: const EdgeInsets.symmetric(vertical: 16,horizontal: 35),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

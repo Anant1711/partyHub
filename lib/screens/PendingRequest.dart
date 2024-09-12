@@ -16,7 +16,8 @@ class PendingRequestsScreen extends StatefulWidget {
 
 class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
   late Future<List<Map<String, dynamic>>> _pendingRequestsFuture;
-  late Future<Map<String, String>> _userNamesFuture; // Store user names mapping
+  late Future<Map<String, String>> _userNamesFuture;
+  late Future<Map<String, String>> _partyNameFuture;// Store Party names mapping
   PartyService partyService = PartyService();
   UserService userService = UserService();
 
@@ -31,10 +32,14 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
     String? userId = widget.userId;
 
     // Fetch pending requests
-    List<Map<String, dynamic>> requests = await partyService.getPendingRequests(userId!);
+    List<Map<String, dynamic>> requests =
+        await partyService.getPendingRequests(userId!);
 
     // Extract host IDs
-    Set<String> hostIds = requests.map((request) => request['hostId'] as String).toSet();
+    Set<String> hostIds =
+        requests.map((request) => request['hostId'] as String).toSet();
+    Set<String> partyIds =
+    requests.map((request) => request['partyId'] as String).toSet();
 
     // Fetch user names
     Map<String, String> userNames = {};
@@ -44,10 +49,18 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
         userNames[hostId] = name;
       }
     }
+    Map<String, String> partynames = {};
+    for (String partyId in partyIds) {
+      String? name = await partyService.getPartyNamebyId(partyId);
+      if (name != null) {
+        partynames[partyId] = name;
+      }
+    }
 
     // Return requests and user names for building the UI
     setState(() {
       _userNamesFuture = Future.value(userNames);
+      _partyNameFuture = Future.value(partynames);
     });
 
     return requests;
@@ -56,16 +69,19 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xffEBEAEF),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: const Text('Your Pending Requests',style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: const Color(0xffEBEAEF),
+        title: const Text('Your Pending Requests',
+            style: TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _pendingRequestsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child:LoadingAnimationWidget.fallingDot(color: const Color(0xff2226BA), size: 50));
+            return Center(
+                child: LoadingAnimationWidget.fallingDot(
+                    color: const Color(0xff2226BA), size: 50));
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -76,51 +92,84 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
             return FutureBuilder<Map<String, String>>(
               future: _userNamesFuture,
               builder: (context, userNamesSnapshot) {
-                if (userNamesSnapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: LoadingAnimationWidget.fallingDot(color: const Color(0xff2226BA), size: 50));
+                if (userNamesSnapshot.connectionState ==
+                    ConnectionState.waiting) {
+                  return Center(
+                      child: LoadingAnimationWidget.fallingDot(
+                          color: const Color(0xff2226BA), size: 50));
                 } else if (userNamesSnapshot.hasError) {
-                  return Center(child: Text('Error: ${userNamesSnapshot.error}'));
+                  return Center(
+                      child: Text('Error: ${userNamesSnapshot.error}'));
                 } else if (!userNamesSnapshot.hasData) {
                   return const Center(child: Text('User names not available'));
                 } else {
                   final userNames = userNamesSnapshot.data!;
 
-                  return ListView.builder(
-                    itemCount: requests.length,
-                    itemBuilder: (context, index) {
-                      final request = requests[index];
-                      final hostId = request['hostId'] ?? 'Unknown User';
-                      final status = request['status'] ?? 'Unknown Status';
-                      final partyID = request['partyId']; // Ensure the ID is fetched correctly
-                      final userName = userNames[hostId] ?? 'Unknown User';
+                  return FutureBuilder<Map<String,String>>(
+                    future: _partyNameFuture,
+                    builder: (context, partyNameSnapShot) {
+                      if (partyNameSnapShot.connectionState ==
+                          ConnectionState.waiting) {
+                        return Center(
+                            child: LoadingAnimationWidget.fallingDot(
+                                color: const Color(0xff2226BA), size: 50));
+                      } else if (partyNameSnapShot.hasError) {
+                        return Center(
+                            child: Text('Error: ${partyNameSnapShot.error}'));
+                      } else if (!partyNameSnapShot.hasData) {
+                        return const Center(
+                            child: Text('User names not available'));
+                      } else {
+                        final partyName = partyNameSnapShot.data!;
+                        return ListView.builder(
+                          itemCount: requests.length,
+                          itemBuilder: (context, index) {
+                            final request = requests[index];
+                            final hostId = request['hostId'] ?? 'Unknown User';
+                            final status = request['status'] ?? 'Unknown Status';
+                            final partyID = request[
+                            'partyId']; // Ensure the ID is fetched correctly
+                            final userName = userNames[hostId] ?? 'Unknown User';
+                            //Party? party = partyService.getPartyByID(partyID);
+                            final specificPartyName = partyName[partyID] ?? 'Fetching Party Name..';
 
-                      return Card(
-                        margin: const EdgeInsets.all(8.0),
-                        child: ListTile(
-                          onTap: () {
-                            fetchAndShowParty(partyID, status);
-                          },
-                          title: Text('Request for $userName',style: TextStyle(fontWeight: FontWeight.bold),),
-                          subtitle: RichText(
-                            text: TextSpan(
-                              text: 'Status: ',
-                              style: TextStyle(
-                                color: Colors.black, // Default color for 'Status:'
-                              ),
-                              children: <TextSpan>[
-                                TextSpan(
-                                  text: status,
-                                  style: TextStyle(
-                                    color: status == 'Pending' ? Colors.orange : Colors.black, // Conditional color
-                                    fontWeight: FontWeight.bold,
+                            return Card(
+                              color: Colors.white,
+                              margin: const EdgeInsets.fromLTRB(
+                                  17.0, 8.0, 17.0, 8.0),
+                              child: ListTile(
+                                onTap: () {
+                                  fetchAndShowParty(partyID, status);
+                                },
+                                title: Text(
+                                  'Request for $specificPartyName',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                subtitle: RichText(
+                                  text: TextSpan(
+                                    text: 'Status: ',
+                                    style: TextStyle(
+                                      color: Colors.black, // Default color for 'Status:'
+                                    ),
+                                    children: <TextSpan>[
+                                      TextSpan(
+                                        text: status,
+                                        style: TextStyle(
+                                          color: status == 'Pending'
+                                              ? Colors.orange
+                                              : Colors.black, // Conditional color
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    },
+                              ),
+                            );
+                          },
+                        );
+                      }
+                    }
                   );
                 }
               },
@@ -131,47 +180,92 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
     );
   }
 
-  void popUp(Party party,String Status,DateTime parsedDateTime) {
-    showDialog(
+  void showBottomSheetForParty(
+      Party party, String status, DateTime parsedDateTime) {
+    showModalBottomSheet(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          title: Center(child: Text(party.name,style: TextStyle(fontWeight: FontWeight.bold),)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildDetailRow('Date:', DateFormat('yyyy-MM-dd').format(parsedDateTime)),
-              // Display Time separately
-              _buildDetailRow('Time:', DateFormat('hh:mm a').format(parsedDateTime)),
-              _buildDetailRow('Location: ', party.location),
-              _buildDetailRow('Status', Status),
-            ],
-          ),
-          actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text('Ok'),
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      builder: (BuildContext context) {
+        final mediaQuery = MediaQuery.of(context);
+        final modalHeight = mediaQuery.size.height * 0.6;
+        return SizedBox(
+          height: modalHeight,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Center(
+                  child: Text(
+                    party.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 30,
+                    ),
+                  ),
                 ),
-          ],
+                const SizedBox(height: 20),
+                _buildDetailRow('Host: ', party.hostName),
+                _buildDetailRow(
+                    'Date:', DateFormat('yyyy-MM-dd').format(parsedDateTime)),
+                _buildDetailRow(
+                    'Time:', DateFormat('hh:mm a').format(parsedDateTime)),
+                _buildDetailRow('Location: ', party.location),
+                _buildDetailRow('Description: ', party.description),
+                _buildDetailRow("Attendees: ", party.attendees.join(", ")),
+                _buildDetailRow('Tags: ', party.tags.join(", ")),
+                _buildDetailRow('Status', status),
+                const Spacer(),
+                Center(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xff2226BA),
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                    ),
+                    child: const Text(
+                      'OK',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
         );
       },
     );
   }
+
   // This function should be async
-  Future<void> fetchAndShowParty(String partyID,String status) async {
+  Future<void> fetchAndShowParty(String partyID, String status) async {
     try {
       // Await the result of the asynchronous method
-      print("Party ID: $partyID");
       Party? party = await partyService.getPartyByID(partyID);
       DateTime parsedDateTime = DateTime.parse(party!.dateTime);
-      // Pass the Party object to your pop-up function
-      popUp(party,status,parsedDateTime);
-        } catch (e) {
+      // Pass the Party object to your bottom sheet function
+      showBottomSheetForParty(party, status, parsedDateTime);
+    } catch (e) {
       // Handle any errors that occur during the fetch
       print('Error fetching party: $e');
     }
   }
+
   Widget _buildDetailRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -188,12 +282,11 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
             child: Text(
               value,
               style: TextStyle(
-                color: value == 'Pending' ? Colors.orange : Colors.black,
-                fontWeight: value == 'Pending' ? FontWeight.bold : FontWeight.normal
-              ),
+                  color: value == 'Pending' ? Colors.orange : Colors.black,
+                  fontWeight:
+                      value == 'Pending' ? FontWeight.bold : FontWeight.normal),
             ),
           ),
-
         ],
       ),
     );

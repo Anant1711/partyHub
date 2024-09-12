@@ -45,9 +45,9 @@ class _JoinedPartiesScreenState extends State<JoinedPartiesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xffEBEAEF),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xffEBEAEF),
         title: const Text('Upcoming Parties', style: TextStyle(fontWeight: FontWeight.bold)),
         iconTheme: IconThemeData(color: Colors.black),
         elevation: 0,

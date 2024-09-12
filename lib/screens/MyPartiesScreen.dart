@@ -90,7 +90,9 @@ class _MyPartiesScreenState extends State<MyPartiesScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15.0),
                         ),
-                        margin: EdgeInsets.symmetric(vertical: 10.0),
+                        color: Colors.white,
+                        margin: const EdgeInsets.fromLTRB(
+                            17.0, 8.0, 17.0, 8.0),
                         child: ListTile(
                           contentPadding: EdgeInsets.all(15),
                           title: Text(
