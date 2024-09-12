@@ -1,9 +1,12 @@
 import 'package:clique/screens/AuthScreen.dart';
 import 'package:clique/screens/home_screen.dart';
+import 'package:clique/screens/profileScreen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import 'firebase_options.dart';
 
@@ -29,8 +32,20 @@ class PartyHubApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      color: const Color(0xffDCDBE2),
+      theme: _buildTheme(Brightness.light),
       title: 'Clique',
       home: AuthenticationWrapper(),
+      routes: {
+        '/profile': (context) => ProfileScreen(),
+      },
+    );
+  }
+  ThemeData _buildTheme(brightness) {
+    var baseTheme = ThemeData(brightness: brightness);
+
+    return baseTheme.copyWith(
+      textTheme: GoogleFonts.latoTextTheme(baseTheme.textTheme),
     );
   }
 }
@@ -42,7 +57,7 @@ class AuthenticationWrapper extends StatelessWidget {
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const CircularProgressIndicator();
+          return LoadingAnimationWidget.fallingDot(color: const Color(0xff2226BA), size: 50);
         } else if (snapshot.hasData) {
           return HomeScreen(); // Use HomeScreen here
         } else {
@@ -51,4 +66,5 @@ class AuthenticationWrapper extends StatelessWidget {
       },
     );
   }
+
 }

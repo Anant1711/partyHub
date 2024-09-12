@@ -140,6 +140,7 @@ class PartyService {
           location: partyData.location,
           maxAttendees: partyData.maxAttendees,
           attendees: List.from(partyData.attendees)..add(userId),
+          tags: List.from(partyData.tags),
           hostName: partyData.hostName,
           hostID: partyData.hostID,
           pendingRequests: partyData.pendingRequests,

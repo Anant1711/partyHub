@@ -1,9 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UserService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Future<Map<String, String>> getAllUsernames(List<String> userIds) async {
     final Map<String, String> usernames = {};
@@ -27,15 +28,31 @@ class UserService {
     return usernames;
   }
 
-  Future<String?> getUserName() async {
-    try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? username = prefs.getString('userName');
-      return username;
-    } catch (e) {
-      print("Error retrieving username: $e");
-      return null;
+  // Future<String?> getUserName() async {
+  //   try {
+  //     SharedPreferences prefs = await SharedPreferences.getInstance();
+  //     String? username = prefs.getString('userName');
+  //     return username;
+  //   } catch (e) {
+  //     print("Error retrieving username: $e");
+  //     return null;
+  //   }
+  // }
+
+  // Method to fetch current user profile data
+  Future<String> getUserNamee() async {
+    User? currentUser = _auth.currentUser;
+    if (currentUser != null) {
+      DocumentSnapshot userDoc = await _firestore.collection('users').doc(currentUser.uid).get();
+
+      if (userDoc.exists) {
+        return userDoc['name'];
+          // _nameController.text = userDoc['name'] ?? '';
+          // _emailController.text = currentUser.email ?? '';
+          // _phoneController.text = userDoc['phone'] ?? '';
+      }
     }
+    return "Unknown User";
   }
 
   Future<String?> getUserId() async {

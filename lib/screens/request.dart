@@ -1,6 +1,6 @@
-import 'package:clique/models/createParty.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import '../services/party_service.dart';
 
 class ManageJoinRequestsScreen extends StatefulWidget {
@@ -47,13 +47,13 @@ class _ManageJoinRequestsScreenState extends State<ManageJoinRequestsScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: const Text('Manage Join Requests'),
+        title: const Text('Manage Join Requests',style: TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _requestsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return  Center(child: LoadingAnimationWidget.fallingDot(color: const Color(0xff2226BA), size: 50));
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -72,7 +72,7 @@ class _ManageJoinRequestsScreenState extends State<ManageJoinRequestsScreen> {
                 return Card(
                   margin: const EdgeInsets.all(8.0),
                   child: ListTile(
-                    title: Text('Request from $userId'),
+                    title: Text('Request from $userId',style: TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Text('Status: $status'),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,

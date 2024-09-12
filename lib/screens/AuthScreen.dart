@@ -74,8 +74,8 @@ class AuthScreenState extends State<AuthScreen> {
     bool status = true;
     try {
       await _auth.createUserWithEmailAndPassword(
-        email: _emailController.text,
-        password: _passwordController.text,
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
       );
     } on FirebaseAuthException catch(e){
       String errorMsg = '';
@@ -112,8 +112,8 @@ class AuthScreenState extends State<AuthScreen> {
     try {
       // Attempt to sign in the user with email and password
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-        email: _emailController.text,
-        password: _passwordController.text,
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
       );
 
       // If sign-in is successful, you can check the user information
@@ -248,7 +248,7 @@ class AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Authentication')),
+      appBar: AppBar(title: Text('Authentication',style: TextStyle(fontWeight: FontWeight.bold))),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -257,12 +257,12 @@ class AuthScreenState extends State<AuthScreen> {
             if (!_isPhoneLogin) ...[
               TextField(
                 controller: _emailController,
-                decoration: InputDecoration(labelText: 'Email'),
+                decoration: const InputDecoration(labelText: 'Email'),
               ),
               TextField(
                 controller: _passwordController,
                 obscureText: true,
-                decoration: InputDecoration(labelText: 'Password'),
+                decoration: const InputDecoration(labelText: 'Password'),
               ),
               ElevatedButton(
                 onPressed: _isSignUp

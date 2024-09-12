@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:clique/screens/profileScreen.dart'; // Import your profile screen
+import 'package:clique/screens/profileScreen.dart';
 import 'package:clique/screens/create_party_screen.dart';
 import 'package:clique/screens/join_party_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -42,13 +43,18 @@ class _HomeScreenState extends State<HomeScreen> {
           const Text(
             'Welcome to Party App!',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            style: TextStyle(fontWeight: FontWeight.w600,fontSize: 28),
           ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'Create or join awesome parties near you.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 16),
+            style: GoogleFonts.lato(
+              textStyle: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
           ),
           const SizedBox(height: 40),
           ElevatedButton(
@@ -58,19 +64,23 @@ class _HomeScreenState extends State<HomeScreen> {
                 MaterialPageRoute(builder: (context) => CreatePartyScreen()),
               );
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
-            child: const Text('Create a Party'),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xff4C46EB)),
+            child: const Text('Create a Party',style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold)),
           ),
-      Card(
-        margin: const EdgeInsets.symmetric(vertical: 8.0),
-        child: ListTile(
-          onTap: () {
-            // Add functionality for tapping
-          },
-          title: Text("AD"),
-          subtitle: Text("Need to be Implement"),
-        ),
-      ),
+          Card(
+            margin: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Card(
+              color: const Color(0xffF6F2FF),
+              margin: const EdgeInsets.symmetric(vertical:0.5),
+              child: ListTile(
+                onTap: () {
+                  // Add functionality for tapping//
+                },
+                title: const Text("AD"),
+                subtitle: const Text("Need to be Implement"),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -79,9 +89,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xffEBEAEF),
+
       body: _getSelectedScreen(), // Show selected screen based on bottom bar selection
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: const Color(0xffF6F2FF),
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
