@@ -2,13 +2,14 @@
 - [ ] Add camera/selfie for verification
 - [ ] Add profile image upload option
 - [ ] Authentication part -> Check if email is valid or not, make user only after taking Full Name. **[High Priority]**
-- [ ] Add tags: non-alcohol / alcohol , females only, hybrid etc.
-- [ ] Add functionality for editing Your Profile Section.
-- [ ] Trim extra space while entering email in Auth screen.
-- [ ] GPS, location, for getting nearby parties.
-- [ ] Separate Date and Time.
+- [ ] GPS, location, for getting nearby parties. **[High Priority]** **[Important]**
 - [ ] Make UI more attractive **[Least Priority]**
+- [X] ~Create Screen for Edit Profile.~
+- [X] ~Add tags: non-alcohol / alcohol , females only, hybrid etc.~
+- [X] ~Change Loading Animation.~
 - [X] ~Change Fonts.~
+- [X] ~Separate Date and Time.~
+- [X] ~Trim extra space while entering email in Auth screen.~
 - [X] ~Refresh join party screen as soon as some one press join.~
 - [X] ~Parties created by host should not shown to host itself.~
 - [X] ~Section for Upcoming Parties~
