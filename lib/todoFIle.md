@@ -2,8 +2,12 @@
 - [ ] Add camera/selfie for verification
 - [ ] Add profile image upload option
 - [ ] Create a public Profile view
+- [ ] Show ack pop-up after request sent to Host.
+- [ ] User can cancel/revert request from Host.
+- [ ] User can send message/Query to host during sending request.
+- [ ] User can add Real Location while creating Parties. **[High Priority]** **[Important]**
+- [ ] User can set location and then app should show nearby parties. **[High Priority]** **[Important]**
 - [ ] Authentication part -> Check if email is valid or not, make user only after taking Full Name. **[High Priority]**
-- [ ] GPS, location, for getting nearby parties. **[High Priority]** **[Important]**
 - [ ] Make UI more attractive **[Least Priority]**
 - [X] ~Create Screen for Edit Profile.~
 - [X] ~Add tags: non-alcohol / alcohol , females only, hybrid etc.~
