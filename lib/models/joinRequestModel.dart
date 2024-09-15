@@ -5,8 +5,10 @@ class JoinRequest {
   final String status; // 'Pending', 'Accepted', or 'Rejected'
   final String partyId;
   final DateTime timestamp;
+  final String requestId;
 
   JoinRequest({
+    required this.requestId,
     required this.userId,
     required this.userName,
     required this.hostId,
@@ -18,6 +20,7 @@ class JoinRequest {
   // Convert JoinRequest object to Map for storing in the database
   Map<String, dynamic> toMap() {
     return {
+      'requestId':requestId,
       'userId': userId,
       'userName': userName,
       'hostId': hostId,
@@ -30,6 +33,7 @@ class JoinRequest {
   // Create a JoinRequest object from a Map (useful when retrieving data from the database)
   factory JoinRequest.fromMap(Map<String, dynamic> map) {
     return JoinRequest(
+      requestId: map['requestId'],
       userId: map['userId'],
       userName: map['userName'],
       hostId: map['hostId'],

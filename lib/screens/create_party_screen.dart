@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'package:clique/screens/GoogleMapsScreen.dart';
+import 'package:clique/services/NetworkUtitliy.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:clique/models/createParty.dart';
@@ -5,6 +8,7 @@ import 'package:clique/services/party_service.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:uuid/uuid.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:clique/services/Location_permission_service.dart';
 
 import '../services/MultiSelectChip.dart';
 
@@ -31,6 +35,7 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
   List<String> selectedTags = [];
 
   final _formKey = GlobalKey<FormState>();
+  final String GoogleMapsAPIKey = "AIzaSyALYSRtamiN-lmyfFxS5VipSyWsBANLOMc";
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _locationController = TextEditingController();
@@ -42,6 +47,7 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
   Uuid uuid = Uuid();
   String? _userName, _hostId;
   bool _isLoading = false; // Add loading flag
+  NetworkUtitliy networkUtitliy = NetworkUtitliy();
 
   @override
   void initState() {
@@ -62,9 +68,9 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: const Color(0xffEBEAEF),
+      backgroundColor: const Color(0xffffffff),
       appBar: AppBar(
-        backgroundColor: const Color(0xffEBEAEF),
+        backgroundColor: const Color(0xffffffff),
         title: const Text('Create a Party',
             style: TextStyle(fontWeight: FontWeight.bold)),
       ),
@@ -90,17 +96,12 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
                     hintText: 'Your party name',
                     hintStyle: TextStyle(color: Colors.grey[500]),
                     filled: true,
-                    fillColor: Colors.white70,
+                    fillColor: Colors.grey[200],
                     prefixIcon:
                         const Icon(Icons.event, color: Colors.blueAccent),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                          const BorderSide(color: Colors.grey, width: 1.5),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -138,18 +139,18 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
                     hintText: 'Enter a short description',
                     hintStyle: TextStyle(color: Colors.grey[500]),
                     filled: true,
-                    fillColor: Colors.white70,
+                    fillColor: Colors.grey[200],
                     prefixIcon:
                         Icon(Icons.description, color: Colors.blueAccent),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                          const BorderSide(color: Colors.grey, width: 1.5),
-                    ),
+                    // enabledBorder: OutlineInputBorder(
+                    //   borderRadius: BorderRadius.circular(12),
+                    //   borderSide:
+                    //       const BorderSide(color: Colors.grey, width: 1.5),
+                    // ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide:
@@ -174,50 +175,61 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
                 const SizedBox(height: 16),
 
                 // Location Field
-                TextFormField(
-                  controller: _locationController,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  decoration: InputDecoration(
-                    labelText: 'Location',
-                    labelStyle: TextStyle(
-                        color: Colors.grey[700], fontWeight: FontWeight.bold),
-                    hintText: 'Enter the location of the party',
-                    hintStyle: TextStyle(color: Colors.grey[500]),
-                    filled: true,
-                    fillColor: Colors.white70,
-                    prefixIcon:
-                        Icon(Icons.location_on, color: Colors.blueAccent),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                          const BorderSide(color: Colors.grey, width: 1.5),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                          BorderSide(color: Colors.blueAccent, width: 2),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.red, width: 1.5),
-                    ),
-                    focusedErrorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.red, width: 2),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter party location';
-                    }
-                    return null;
+                GestureDetector(
+                  onTap: () {
+                    //open Bottom Sheet
+                    _showPartyDetailsBottomSheet(context);
+                    print("Location Pressed");
                   },
+                  child: AbsorbPointer(
+                    child: TextFormField(
+                      controller: _locationController,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: 'Location',
+                        labelStyle: TextStyle(
+                            color: Colors.grey[700],
+                            fontWeight: FontWeight.bold),
+                        hintText: 'Enter the location of the party',
+                        hintStyle: TextStyle(color: Colors.grey[500]),
+                        filled: true,
+                        fillColor: Colors.grey[200],
+                        prefixIcon:
+                            Icon(Icons.location_on, color: Colors.blueAccent),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        // enabledBorder: OutlineInputBorder(
+                        //   borderRadius: BorderRadius.circular(12),
+                        //   borderSide:
+                        //       const BorderSide(color: Colors.grey, width: 1.5),
+                        // ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                              BorderSide(color: Colors.blueAccent, width: 2),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.red, width: 1.5),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.red, width: 2),
+                        ),
+                      ),
+                      //Todo: Un-Comment it.
+                      // validator: (value) {
+                      //   if (value == null || value.isEmpty) {
+                      //     return 'Please enter party location';
+                      //   }
+                      //   return null;
+                      // },
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 16),
 
@@ -234,17 +246,17 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
                     hintText: 'Enter maximum number of attendees',
                     hintStyle: TextStyle(color: Colors.grey[500]),
                     filled: true,
-                    fillColor: Colors.white70,
+                    fillColor: Colors.grey[200],
                     prefixIcon: Icon(Icons.people, color: Colors.blueAccent),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                          const BorderSide(color: Colors.grey, width: 1.5),
-                    ),
+                    // enabledBorder: OutlineInputBorder(
+                    //   borderRadius: BorderRadius.circular(12),
+                    //   borderSide:
+                    //       const BorderSide(color: Colors.grey, width: 1.5),
+                    // ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide:
@@ -293,18 +305,18 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
                         hintText: 'Select date and time',
                         hintStyle: TextStyle(color: Colors.grey[500]),
                         filled: true,
-                        fillColor: Colors.white70,
+                        fillColor: Colors.grey[200],
                         prefixIcon: Icon(Icons.calendar_today,
                             color: Colors.blueAccent),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
                         ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                              const BorderSide(color: Colors.grey, width: 1.5),
-                        ),
+                        // enabledBorder: OutlineInputBorder(
+                        //   borderRadius: BorderRadius.circular(12),
+                        //   borderSide:
+                        //       const BorderSide(color: Colors.grey, width: 1.5),
+                        // ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide:
@@ -384,7 +396,7 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
       description: _descriptionController.text,
       dateTime: _selectedDateTime?.toIso8601String() ??
           DateTime.now().toIso8601String(),
-      location: _locationController.text,
+      location: "Default Pune",// _locationController.text,
       maxAttendees: int.parse(_maxAttendeesController.text),
       tags: selectedTags,
       hostName: _userName ?? 'Unknown Host',
@@ -441,4 +453,143 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
           '${_dateFormat.format(_selectedDateTime!)} ${_timeFormat.format(_selectedDateTime!)}';
     });
   }
+
+  void _showPartyDetailsBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        builder: (BuildContext context) {
+          final mediaQuery = MediaQuery.of(context);
+          final modalHeight = mediaQuery.size.height * 0.8;
+
+          return SizedBox(
+            height: modalHeight,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Center(
+                    child: Text(
+                      "Location",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 30,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Form(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: TextFormField(
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
+                        decoration: InputDecoration(
+                          labelStyle: TextStyle(
+                              color: Colors.grey[700],
+                              fontWeight: FontWeight.bold),
+                          hintText: 'Search Location',
+                          hintStyle: TextStyle(color: Colors.grey[500]),
+                          filled: true,
+                          fillColor: Colors.grey[200],
+                          prefixIcon: const Icon(Icons.location_pin,
+                              color: Colors.blueAccent),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide:
+                                BorderSide(color: Colors.blueAccent, width: 2),
+                          ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide:
+                                BorderSide(color: Colors.red, width: 1.5),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.red, width: 2),
+                          ),
+                        ),
+                        onChanged: (value) {
+                          //Todo: Save selected!
+                        },
+                        textInputAction: TextInputAction.search,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Center(
+                    child: SizedBox(
+                      width: mediaQuery.size.width * 0.8, // Set button width
+                      child: TextButton(
+                        onPressed: () {
+                          //Todo: Use my current Location
+                          determinePosition().then((positionValue){
+                            Navigator.push(context,MaterialPageRoute(builder: (context)=>Googlemapsscreen(lat: positionValue.latitude, long: positionValue.longitude)));
+                          }).onError((error,stackTrace){print(error.toString());});
+
+                          //placeAutoComplete("Dhampur");
+                        },
+                        // style: buttonStyle,
+                        child: const Text(
+                          'Use my current location',
+                          style: TextStyle(
+                            color: Colors.blueAccent,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20), // Add padding at the bottom
+                ],
+              ),
+            ),
+          );
+        });
+  }
+
+  //Todo: Search Place is not working
+  void placeAutoComplete(String query) async {
+    Uri uri = Uri.https(
+        "maps.googleapis.com",
+      "maps/api/place/autocomplete/json",
+        {
+          "input":query,
+          "key":GoogleMapsAPIKey,
+
+        }
+    );
+
+    String? response = await NetworkUtitliy.fetchURL(uri);
+
+    if (response != null) {
+      Map<String, dynamic> json = jsonDecode(response);
+      if (json['status'] == 'OK') {
+        List<dynamic> predictions = json['predictions'];
+        List<String> suggestions = predictions
+            .map((prediction) => prediction['description'].toString())
+            .toList();
+
+        print(suggestions); // You can now print or handle the suggestions
+      } else {
+        print('Error fetching suggestions: ${json['status']}');
+      }
+    }
+
+  }
+
 }

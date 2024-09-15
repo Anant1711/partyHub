@@ -45,6 +45,31 @@ class PartyService {
     }
   }
 
+  //Add function for getting party Name by ID
+  Future<String?> getPartyNamebyId(String partyId)async{
+
+    QuerySnapshot querySnapshot = await _firestore
+        .collection(PREF_NAME)
+        .where('id', isEqualTo: partyId)
+        .get();
+
+    // Check if any documents were returned
+    if (querySnapshot.docs.isNotEmpty) {
+      // Get the first document from the query snapshot
+      DocumentSnapshot documentSnapshot = querySnapshot.docs.first;
+
+      // Extract the 'name' field from the document data
+      String? name = documentSnapshot.get('name');
+
+      // Return the extracted name
+      return name;
+    } else {
+      // Return null if no documents were found
+      return null;
+    }
+
+  }
+
   //Get specific user's parties
   Future<List<Party>> getUserParties(String userId) async {
     debugPrint("Getting Parties created by user: $userId");
@@ -81,6 +106,45 @@ class PartyService {
     await _firestore.collection(PREF_NAME).doc(party.id).update(party.toMap());
   }
 
+  Future<void> deleteFromPendingReq(String partyId,String userId)async{
+    try {
+      // Reference to the Firestore collection (assuming you have a 'parties' collection)
+      CollectionReference parties = FirebaseFirestore.instance.collection(PREF_NAME);
+
+      // Fetch the party document by ID
+      DocumentReference partyDoc = parties.doc(partyId);
+
+      print("Deleting user $userId from $partyId party ID");
+      // Update the pendingRequests field (add the userId to the array)
+      await partyDoc.update({
+        'pendingRequests': FieldValue.arrayRemove([userId]),
+      });
+
+      print("Pending request remove successfully.");
+    } catch (e) {
+      print("Error removing pending requests: $e");
+    }
+  }
+
+  Future<void> updatePendingRequests(String partyId, String userId) async {
+    try {
+      // Reference to the Firestore collection (assuming you have a 'parties' collection)
+      CollectionReference parties = FirebaseFirestore.instance.collection(PREF_NAME);
+
+      // Fetch the party document by ID
+      DocumentReference partyDoc = parties.doc(partyId);
+
+      // Update the pendingRequests field (add the userId to the array)
+      await partyDoc.update({
+        'pendingRequests': FieldValue.arrayUnion([userId]),
+      });
+
+      print("Pending request updated successfully.");
+    } catch (e) {
+      print("Error updating pending requests: $e");
+    }
+  }
+
   // Delete a party
   Future<void> deleteParty(String partyId) async {
     debugPrint("Deleting a Party");
@@ -92,7 +156,7 @@ class PartyService {
   Future<void> createJoinRequest(JoinRequest joinRequest) async {
     await _firestore
         .collection(REQUEST_COLLECTION)
-        .doc(uid.v4())  // Using `partyId` as the requestID
+        .doc(joinRequest.requestId)  // Using `partyId` as the requestID
         .set(joinRequest.toMap());  // Directly setting the content of the request
 
   }
@@ -152,7 +216,7 @@ class PartyService {
 
   //Delete Request
   Future<void> deleteRequest(String requestId) async {
-    debugPrint("Deleting a Request");
+    debugPrint("Deleting a Request with $requestId");
     await _firestore.collection(REQUEST_COLLECTION).doc(requestId).delete();
   }
 
