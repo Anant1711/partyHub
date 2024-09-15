@@ -55,6 +55,7 @@ class UserService {
     return "Unknown User";
   }
 
+  //Get User ID
   Future<String?> getUserId() async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -66,6 +67,7 @@ class UserService {
     }
   }
 
+  //Get User Name by ID
   Future<String?> getUserNameByID(String userID) async {
     // Fetch the documents where 'userID' matches the provided userID
     QuerySnapshot querySnapshot = await _firestore
@@ -88,5 +90,22 @@ class UserService {
       return null;
     }
   }
+
+  //Get User object by ID
+  // Fetch user data by userId
+  Future<Map<String, dynamic>?> getUserObjectById(String userId) async {
+    try {
+      DocumentSnapshot userDoc = await _firestore.collection('users').doc(userId).get();
+      if (userDoc.exists) {
+        return userDoc.data() as Map<String, dynamic>?;
+      } else {
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching user data: $e');
+      return null;
+    }
+  }
+
 
 }

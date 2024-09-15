@@ -86,11 +86,11 @@ class _MyPartiesScreenState extends State<MyPartiesScreen> {
                       String time = DateFormat('hh:mm a').format(parsedDateTime);
 
                       return Card(
-                        elevation: 5,
+                        elevation:0.55,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15.0),
                         ),
-                        color: Colors.white,
+                        color: Colors.grey[200],
                         margin: const EdgeInsets.fromLTRB(
                             17.0, 8.0, 17.0, 8.0),
                         child: ListTile(
@@ -129,7 +129,7 @@ class _MyPartiesScreenState extends State<MyPartiesScreen> {
                             ],
                           ),
                           trailing: Icon(Icons.arrow_forward_ios),
-                          onTap: () => popUp(party),
+                          onTap: () => showBottomSheetForParty(party),
                         ),
                       );
                     },
@@ -208,20 +208,159 @@ class _MyPartiesScreenState extends State<MyPartiesScreen> {
     );
   }
 
+  void showBottomSheetForParty(Party party) {
+    DateTime parsedDateTime = DateTime.parse(party.dateTime);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      builder: (BuildContext context) {
+        final mediaQuery = MediaQuery.of(context);
+        final modalHeight = mediaQuery.size.height * 0.6;
+        return SizedBox(
+          height: modalHeight,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Center(
+                  child: Text(
+                    party.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 30,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _buildDetailRow('Host: ', party.hostName),
+                _buildDetailRow(
+                    'Date:', DateFormat('yyyy-MM-dd').format(parsedDateTime)),
+                _buildDetailRow(
+                    'Time:', DateFormat('hh:mm a').format(parsedDateTime)),
+                _buildDetailRow('Location: ', party.location),
+                _buildDetailRow('Description: ', party.description),
+                FutureBuilder<Map<String, String>>(
+                  future: _usernamesFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(child: LoadingAnimationWidget.fallingDot(color: const Color(0xff2226BA), size: 50));
+                    } else if (snapshot.hasError) {
+                      return Text('Error: ${snapshot.error}');
+                    } else if (!snapshot.hasData) {
+                      return Text('Error loading usernames');
+                    } else {
+                      final usernames = snapshot.data!;
+                      final attendeeNames = party.attendees
+                          .map((userId) => usernames[userId] ?? 'Unknown')
+                          .join(', ');
+                      return _buildDetailRow('Total Attendees: ', attendeeNames);
+                    }
+                  },
+                ),
+                _buildDetailRow('Tags: ', party.tags.join(", ")),
+                const Spacer(),
+                Center(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      // Wait for confirmation before proceeding
+                      bool confirmDelete = await _confirmJoinParty(party.name);
+                      if (confirmDelete) {
+                        // Perform deletion after confirmation
+                        await partyService.deleteParty(party.id);
+                        Navigator.pop(context);  // Close the modal
+                        setState(() {
+                          _myPartiesFuture = _loadMyParties();  // Reload parties
+                        });
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      padding: const EdgeInsets.symmetric(vertical: 15,horizontal: 35),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                    ),
+                    child: const Text(
+                      'Delete',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<bool> _confirmJoinParty(String partyName) async {
+    print("Confirm pressed");
+    final confirmation = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          title: Center(
+            child: Text(
+              'Delete $partyName?',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          content: const Text("Are you sure you want to delete this party?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),  // Return false if canceled
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+              ),
+              onPressed: () => Navigator.of(context).pop(true),  // Return true if confirmed
+              child: const Text(
+                'Delete',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    return confirmation ?? false;  // Default to false if dialog is dismissed
+  }
+
+
+
+
   Widget _buildDetailRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             child: Text(
               label,
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(fontWeight: FontWeight.bold,fontSize: 17),
             ),
           ),
           Expanded(
-            child: Text(value),
+            child: Text(value,style: TextStyle(fontSize: 17),),
           ),
         ],
       ),

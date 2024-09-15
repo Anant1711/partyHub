@@ -45,9 +45,10 @@ class _ManageJoinRequestsScreenState extends State<ManageJoinRequestsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffEBEAEF),
+      backgroundColor: const Color(0xffffffff),
       appBar: AppBar(
-        backgroundColor: const Color(0xffEBEAEF),
+        surfaceTintColor: Colors.white,
+        backgroundColor: const Color(0xffffffff),
         title: const Text('Manage Join Requests',style: TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
@@ -71,7 +72,7 @@ class _ManageJoinRequestsScreenState extends State<ManageJoinRequestsScreen> {
                 final DocId = request['DocId']; // Ensure the ID is fetched correctly
 
                 return Card(
-                  color: Colors.white,
+                  color: Colors.grey[200],
                   margin: const EdgeInsets.fromLTRB(
                       17.0, 8.0, 17.0, 8.0),
                   child: ListTile(

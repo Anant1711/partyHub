@@ -114,6 +114,7 @@ class PartyService {
       // Fetch the party document by ID
       DocumentReference partyDoc = parties.doc(partyId);
 
+      print("Deleting user $userId from $partyId party ID");
       // Update the pendingRequests field (add the userId to the array)
       await partyDoc.update({
         'pendingRequests': FieldValue.arrayRemove([userId]),
@@ -155,7 +156,7 @@ class PartyService {
   Future<void> createJoinRequest(JoinRequest joinRequest) async {
     await _firestore
         .collection(REQUEST_COLLECTION)
-        .doc(uid.v4())  // Using `partyId` as the requestID
+        .doc(joinRequest.requestId)  // Using `partyId` as the requestID
         .set(joinRequest.toMap());  // Directly setting the content of the request
 
   }
@@ -215,7 +216,7 @@ class PartyService {
 
   //Delete Request
   Future<void> deleteRequest(String requestId) async {
-    debugPrint("Deleting a Request");
+    debugPrint("Deleting a Request with $requestId");
     await _firestore.collection(REQUEST_COLLECTION).doc(requestId).delete();
   }
 

@@ -1,15 +1,19 @@
 # Todo
 - [ ] Add camera/selfie for verification
-- [ ] Add profile image upload option
-- [ ] Create a public Profile view
 - [ ] Show ack pop-up after request sent to Host.
-- [ ] User can cancel/revert request from Host.
+- [ ] Add Party Delete/Cancel option for Host.
+- [ ] Add Ratings/Reviews for Users/Hosts
+- [ ] Bottom Sheet for Manage Join Request
 - [ ] User can send message/Query to host during sending request.
 - [ ] User can add Real Location while creating Parties. **[High Priority]** **[Important]**
 - [ ] User can set location and then app should show nearby parties. **[High Priority]** **[Important]**
 - [ ] Authentication part -> Check if email is valid or not, make user only after taking Full Name. **[High Priority]**
+- [ ] Create a Shimmer effect in join_party_scree for loading parties.
 - [ ] Make UI more attractive **[Least Priority]**
+- [X] ~User can cancel/revert request from Host.~
+- [X] ~Create a public Profile view~
 - [X] ~Create Screen for Edit Profile.~
+- [X] ~Add profile image upload option~
 - [X] ~Add tags: non-alcohol / alcohol , females only, hybrid etc.~
 - [X] ~Change Loading Animation.~
 - [X] ~Change Fonts.~

@@ -1,9 +1,11 @@
+import 'package:clique/screens/publicUserProfile.dart';
 import 'package:flutter/material.dart';
 import 'package:clique/services/party_service.dart';
 import 'package:clique/models/createParty.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 import '../models/joinRequestModel.dart';
 import '../services/UserService.dart';
 import '../utility/commonutility.dart';
@@ -20,8 +22,10 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
   late Future<List<Party>> _partiesFuture;
   late Future<Map<String, String>> _usernamesFuture;
   late var mUserId;
+  final String GoogleMapsAPIKey = "AIzaSyALYSRtamiN-lmyfFxS5VipSyWsBANLOMc";
   PartyService partyservice = new PartyService();
   late bool hasPendingRequest;
+  Uuid uid = Uuid();
 
   @override
   void initState() {
@@ -32,7 +36,6 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
   Future<List<Party>> _getFilteredParties() async {
     final parties = await PartyService().getParties();
     final userId = await _getUserId();
-
 
     // Filter out parties created by the current user
     return parties.where((party) => party.hostID != userId).toList();
@@ -105,6 +108,7 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
   Future<void> _joinParty(Party party, String userName, String userId) async {
     final partyService = PartyService();
     final joinRequest = JoinRequest(
+      requestId: uid.v4(),
       userId: userId,
       userName: userName,
       hostId: party.hostID,
@@ -112,6 +116,7 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
       partyId: party.id,
       timestamp: DateTime.now(),
     );
+    print(joinRequest);
 
     await partyService.createJoinRequest(joinRequest);
     await partyService.updatePendingRequests(party.id, userId);
@@ -119,7 +124,7 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
       const SnackBar(
           content: Text('Join request sent. Waiting for host approval.')),
     );
-
+    Navigator.pop(context);
     setState(() {
       _partiesFuture = _getFilteredParties(); // Refresh the parties list
     });
@@ -128,9 +133,10 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffEBEAEF),
+      backgroundColor: const Color(0xffffffff),
       appBar: AppBar(
-        backgroundColor: const Color(0xffEBEAEF),
+        surfaceTintColor: Colors.white,
+        backgroundColor: const Color(0xffffffff),
         title: const Text('Join a Party',
             style: TextStyle(fontWeight: FontWeight.bold)),
       ),
@@ -201,7 +207,7 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
                                 DateFormat('hh:mm a').format(parsedDateTime);
 
                             return Card(
-                              color: Colors.white,
+                              color: Colors.grey[100],
                               margin: const EdgeInsets.fromLTRB(
                                   17.0, 8.0, 17.0, 8.0),
                               child: ListTile(
@@ -301,7 +307,8 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
   Future<List<String>> _getAttendeeUsernames(List<String> attendeeIds) async {
     List<String> attendeeUsernames = [];
     for (String userId in attendeeIds) {
-      String? username = await UserService().getUserNameByID(userId); // Fetch username by userId
+      String? username = await UserService()
+          .getUserNameByID(userId); // Fetch username by userId
       if (username != null) {
         attendeeUsernames.add(username); // Add the fetched username to the list
       } else {
@@ -311,17 +318,23 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
     return attendeeUsernames; // Return the list of usernames
   }
 
-
   Widget _buildDetailRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('$label ', style: TextStyle(fontWeight: FontWeight.bold)),
-          Flexible(
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(fontWeight: FontWeight.bold,fontSize: 17),
+            ),
+          ),
+          Expanded(
             child: Text(
               value,
-              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                  fontSize: 17,),
             ),
           ),
         ],
@@ -394,9 +407,11 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
         width: MediaQuery.of(context).size.width * 0.8,
         child: ElevatedButton(
           onPressed: () async {
-            String? userName = await _getUserName(); // Get username for confirmation
+            String? userName =
+                await _getUserName(); // Get username for confirmation
             if (mUserId != null && userName != null) {
-              _confirmJoinParty(party, userName, mUserId, parsedDateTime); // Confirm joining party
+              _confirmJoinParty(party, userName, mUserId,
+                  parsedDateTime); // Confirm joining party
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -424,9 +439,9 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
       return "Joined";
     } else if (party.attendees.length == party.maxAttendees) {
       return "Full";
-    } else if(party.pendingRequests.contains(mUserId)){
+    } else if (party.pendingRequests.contains(mUserId)) {
       return "Pending";
-    }else{
+    } else {
       return 'button';
     }
   }
@@ -455,8 +470,11 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
           future: _getAttendeeUsernames(party.attendees), // Fetch usernames for attendees
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(), // Display a loading indicator
+              return Center(
+                child: LoadingAnimationWidget.fallingDot(
+                  color: Color(0xff2226BA),
+                  size: 50,
+                ), // Display a loading indicator
               );
             } else if (snapshot.hasError) {
               return Center(
@@ -482,7 +500,31 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      _buildDetailRow('Host: ', party.hostName),
+                      // Row(
+                      //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      //   children: [
+                      //     Expanded(
+                      //       child: _buildDetailRow('Host: ', party.hostName),
+                      //     ),
+                      //     TextButton(
+                      //       onPressed: () {
+                      //         Navigator.push(
+                      //           context,
+                      //           MaterialPageRoute(
+                      //             builder: (context) => publicUserProfile(
+                      //               userId: party.hostID,
+                      //             ),
+                      //           ),
+                      //         );
+                      //       },
+                      //       style: ButtonStyle(
+                      //         fixedSize: MaterialStateProperty.all(Size(150, 40)), // Set width and height here
+                      //       ),
+                      //       child: const Text("View Profile"),
+                      //     ),
+                      //   ],
+                      // ),
+                      _buildDetailRowWithButton("Host: ",party),
                       _buildDetailRow("Date: ", date),
                       _buildDetailRow("Time: ", time),
                       _buildDetailRow('Location: ', party.location),
@@ -491,7 +533,7 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
                       // Only show attendees row if there are attendees
                       if (attendeeUsernames.isNotEmpty)
                         _buildDetailRow("Attendees: ", attendeeUsernames.join(", ")),
-                      if(attendeeUsernames.isEmpty)
+                      if (attendeeUsernames.isEmpty)
                         _buildDetailRow("Attendees: ", "No Attendees yet!"),
 
                       _buildDetailRow('Tags: ', party.tags.join(", ")),
@@ -521,4 +563,49 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
       },
     );
   }
+
+  Widget _buildDetailRowWithButton(String label, Party party) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center, // Aligns widgets vertically in the center
+        children: [
+          SizedBox(
+            width: 100, // Fixed width to ensure alignment
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.bold,fontSize: 17),
+              overflow: TextOverflow.ellipsis, // Handles text overflow
+            ),
+          ),
+          Expanded(
+            child: TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => publicUserProfile(
+                      userId: party.hostID,
+                    ),
+                  ),
+                );
+              },
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero, // Remove extra padding
+              ),
+              child: Text(
+                "${party.hostName}",
+                style: const TextStyle(
+                  fontSize: 17,
+                  color: Colors.blue, // Adjust as needed
+                  fontWeight: FontWeight.normal,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 }

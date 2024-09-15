@@ -1,3 +1,4 @@
+import 'package:clique/screens/publicUserProfile.dart';
 import 'package:clique/services/UserService.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -69,9 +70,9 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffEBEAEF),
+      backgroundColor: const Color(0xffffffff),
       appBar: AppBar(
-        backgroundColor: const Color(0xffEBEAEF),
+        backgroundColor: const Color(0xffffffff),
         title: const Text('Your Pending Requests',
             style: TextStyle(fontWeight: FontWeight.bold)),
       ),
@@ -129,17 +130,20 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
                             final status = request['status'] ?? 'Unknown Status';
                             final partyID = request[
                             'partyId']; // Ensure the ID is fetched correctly
-                            final userName = userNames[hostId] ?? 'Unknown User';
+                            final hostUserName = userNames[hostId] ?? 'Unknown User';
+                            final UserId = request['userId'] ?? 'Unknown User';
+                            final requestID = request['requestId'] ?? 'Unknown User';
                             //Party? party = partyService.getPartyByID(partyID);
                             final specificPartyName = partyName[partyID] ?? 'Fetching Party Name..';
 
                             return Card(
-                              color: Colors.white,
+                              color: Colors.grey[200],
                               margin: const EdgeInsets.fromLTRB(
                                   17.0, 8.0, 17.0, 8.0),
                               child: ListTile(
                                 onTap: () {
-                                  fetchAndShowParty(partyID, status);
+                                  fetchAndShowParty(UserId,requestID,partyID, status);
+                                  print("printing request iD: $requestID");
                                 },
                                 title: Text(
                                   'Request for $specificPartyName',
@@ -180,8 +184,12 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
     );
   }
 
-  void showBottomSheetForParty(
-      Party party, String status, DateTime parsedDateTime) {
+  void deleteRequest(String requestId,String partyId,String userId){
+    partyService.deleteFromPendingReq(partyId, userId);
+    partyService.deleteRequest(requestId);
+  }
+
+  void showBottomSheetForParty(String userId, String requestId, Party party, String status, DateTime parsedDateTime) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -193,12 +201,9 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
         ),
       ),
       builder: (BuildContext context) {
-        final mediaQuery = MediaQuery.of(context);
-        final modalHeight = mediaQuery.size.height * 0.6;
-        return SizedBox(
-          height: modalHeight,
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -213,37 +218,39 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                _buildDetailRow('Host: ', party.hostName),
-                _buildDetailRow(
-                    'Date:', DateFormat('yyyy-MM-dd').format(parsedDateTime)),
-                _buildDetailRow(
-                    'Time:', DateFormat('hh:mm a').format(parsedDateTime)),
+                _buildDetailRowWithButton('Host: ', party),
+                _buildDetailRow('Date:', DateFormat('yyyy-MM-dd').format(parsedDateTime)),
+                _buildDetailRow('Time:', DateFormat('hh:mm a').format(parsedDateTime)),
                 _buildDetailRow('Location: ', party.location),
                 _buildDetailRow('Description: ', party.description),
                 _buildDetailRow("Attendees: ", party.attendees.join(", ")),
                 _buildDetailRow('Tags: ', party.tags.join(", ")),
                 _buildDetailRow('Status', status),
-                const Spacer(),
+                const SizedBox(height: 50),
                 Center(
                   child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      deleteRequest(requestId, party.id, userId);
+                      Navigator.pop(context, true);
+                    },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xff2226BA),
-                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      backgroundColor: Colors.red,
+                      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 35),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0),
                       ),
                     ),
                     child: const Text(
-                      'OK',
+                      'Cancel Request',
                       style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold),
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 20,)
               ],
             ),
           ),
@@ -253,13 +260,14 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
   }
 
   // This function should be async
-  Future<void> fetchAndShowParty(String partyID, String status) async {
+  Future<void> fetchAndShowParty(String userId,String requestID,String partyID, String status) async {
     try {
       // Await the result of the asynchronous method
       Party? party = await partyService.getPartyByID(partyID);
       DateTime parsedDateTime = DateTime.parse(party!.dateTime);
       // Pass the Party object to your bottom sheet function
-      showBottomSheetForParty(party, status, parsedDateTime);
+      print("printing request iD: $requestID");
+      showBottomSheetForParty(userId,requestID,party, status, parsedDateTime);
     } catch (e) {
       // Handle any errors that occur during the fetch
       print('Error fetching party: $e');
@@ -268,20 +276,21 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
 
   Widget _buildDetailRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             child: Text(
               label,
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(fontWeight: FontWeight.bold,fontSize: 17),
             ),
           ),
           Expanded(
             child: Text(
               value,
               style: TextStyle(
+                  fontSize: 17,
                   color: value == 'Pending' ? Colors.orange : Colors.black,
                   fontWeight:
                       value == 'Pending' ? FontWeight.bold : FontWeight.normal),
@@ -291,4 +300,49 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
       ),
     );
   }
+  Widget _buildDetailRowWithButton(String label, Party party) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center, // Aligns widgets vertically in the center
+        children: [
+          SizedBox(
+            width: 100, // Fixed width to ensure alignment
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.bold,fontSize: 17),
+              overflow: TextOverflow.ellipsis, // Handles text overflow
+            ),
+          ),
+          Expanded(
+            child: TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => publicUserProfile(
+                      userId: party.hostID,
+                    ),
+                  ),
+                );
+              },
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero, // Remove extra padding
+              ),
+              child: Text(
+                "${party.hostName}",
+                style: const TextStyle(
+                  fontSize: 17,
+                  color: Colors.blue, // Adjust as needed
+                  fontWeight: FontWeight.normal,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 }
+

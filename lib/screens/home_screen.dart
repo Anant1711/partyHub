@@ -89,11 +89,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffEBEAEF),
+      backgroundColor: const Color(0xffffffff),
 
       body: _getSelectedScreen(), // Show selected screen based on bottom bar selection
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: const Color(0xffF6F2FF),
+        backgroundColor: const Color(0xffffffff),
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.home),

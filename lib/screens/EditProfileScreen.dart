@@ -104,14 +104,37 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       controller: _nameController,
                       decoration: InputDecoration(
                         labelText: 'Name',
-                        labelStyle: TextStyle(fontWeight: FontWeight.bold),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12.0),
-                        ),
+                        labelStyle: TextStyle(
+                            color: Colors.grey[700],
+                            fontWeight: FontWeight.bold),
+                        hintText: 'Enter your full name',
+                        hintStyle: TextStyle(color: Colors.grey[500]),
                         filled: true,
                         fillColor: Colors.grey[200],
-                        contentPadding: const EdgeInsets.symmetric(
-                            vertical: 20, horizontal: 15),
+                        prefixIcon:
+                        Icon(Icons.event, color: Colors.blueAccent),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        // enabledBorder: OutlineInputBorder(
+                        //   borderRadius: BorderRadius.circular(12),
+                        //   borderSide:
+                        //       const BorderSide(color: Colors.grey, width: 1.5),
+                        // ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                          BorderSide(color: Colors.blueAccent, width: 2),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.red, width: 1.5),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.red, width: 2),
+                        ),
                       ),
                       style: const TextStyle(
                           fontSize: 16, fontWeight: FontWeight.w500),
@@ -121,14 +144,32 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       controller: _emailController,
                       decoration: InputDecoration(
                         labelText: 'Email',
-                        labelStyle: TextStyle(fontWeight: FontWeight.bold),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12.0),
-                        ),
+                        labelStyle: TextStyle(
+                            color: Colors.grey[700],
+                            fontWeight: FontWeight.bold),
+                        hintText: 'Enter your email address',
+                        hintStyle: TextStyle(color: Colors.grey[500]),
                         filled: true,
                         fillColor: Colors.grey[200],
-                        contentPadding: const EdgeInsets.symmetric(
-                            vertical: 20, horizontal: 15),
+                        prefixIcon:
+                        Icon(Icons.email, color: Colors.blueAccent),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                          BorderSide(color: Colors.blueAccent, width: 2),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.red, width: 1.5),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.red, width: 2),
+                        ),
                       ),
                       style: const TextStyle(
                           fontSize: 16, fontWeight: FontWeight.w500),
@@ -139,14 +180,37 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       controller: _phoneController,
                       decoration: InputDecoration(
                         labelText: 'Phone Number',
-                        labelStyle: TextStyle(fontWeight: FontWeight.bold),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12.0),
-                        ),
+                        labelStyle: TextStyle(
+                            color: Colors.grey[700],
+                            fontWeight: FontWeight.bold),
+                        hintText: 'Enter your phone number',
+                        hintStyle: TextStyle(color: Colors.grey[500]),
                         filled: true,
                         fillColor: Colors.grey[200],
-                        contentPadding: const EdgeInsets.symmetric(
-                            vertical: 20, horizontal: 15),
+                        prefixIcon:
+                        Icon(Icons.phone, color: Colors.blueAccent),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        // enabledBorder: OutlineInputBorder(
+                        //   borderRadius: BorderRadius.circular(12),
+                        //   borderSide:
+                        //       const BorderSide(color: Colors.grey, width: 1.5),
+                        // ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                          BorderSide(color: Colors.blueAccent, width: 2),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.red, width: 1.5),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.red, width: 2),
+                        ),
                       ),
                       style: const TextStyle(
                           fontSize: 16, fontWeight: FontWeight.w500),
