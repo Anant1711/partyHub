@@ -23,16 +23,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void _loadUserProfile() async {
     User? currentUser = _auth.currentUser;
     if (currentUser != null) {
-      DocumentSnapshot userDoc =
-          await _firestore.collection('users').doc(currentUser.uid).get();
-
-      if (userDoc.exists) {
-        setState(() {
-          _nameController.text = userDoc['name'] ?? '';
-          _emailController.text = currentUser.email ?? '';
-          _phoneController.text = userDoc['phone'] ?? '';
-        });
-      }
+      setState(() {
+        _nameController.text = currentUser.displayName ?? '';
+        _emailController.text = currentUser.email ?? '';
+        _phoneController.text = currentUser.phoneNumber ?? '';
+        print("${currentUser.displayName} || ${currentUser.email}");
+      });
     }
   }
 
@@ -112,20 +108,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         filled: true,
                         fillColor: Colors.grey[200],
                         prefixIcon:
-                        Icon(Icons.event, color: Colors.blueAccent),
+                            Icon(Icons.person, color: Colors.blueAccent),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
                         ),
-                        // enabledBorder: OutlineInputBorder(
-                        //   borderRadius: BorderRadius.circular(12),
-                        //   borderSide:
-                        //       const BorderSide(color: Colors.grey, width: 1.5),
-                        // ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide:
-                          BorderSide(color: Colors.blueAccent, width: 2),
+                              BorderSide(color: Colors.blueAccent, width: 2),
                         ),
                         errorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -151,8 +142,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         hintStyle: TextStyle(color: Colors.grey[500]),
                         filled: true,
                         fillColor: Colors.grey[200],
-                        prefixIcon:
-                        Icon(Icons.email, color: Colors.blueAccent),
+                        prefixIcon: Icon(Icons.email, color: Colors.blueAccent),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -160,7 +150,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide:
-                          BorderSide(color: Colors.blueAccent, width: 2),
+                              BorderSide(color: Colors.blueAccent, width: 2),
                         ),
                         errorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -187,8 +177,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         hintStyle: TextStyle(color: Colors.grey[500]),
                         filled: true,
                         fillColor: Colors.grey[200],
-                        prefixIcon:
-                        Icon(Icons.phone, color: Colors.blueAccent),
+                        prefixIcon: Icon(Icons.phone, color: Colors.blueAccent),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -201,7 +190,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide:
-                          BorderSide(color: Colors.blueAccent, width: 2),
+                              BorderSide(color: Colors.blueAccent, width: 2),
                         ),
                         errorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),

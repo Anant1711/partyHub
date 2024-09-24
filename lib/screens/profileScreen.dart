@@ -3,6 +3,7 @@ import 'package:clique/utility/CommonUtility.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io'; // for File
 import 'package:loading_animation_widget/loading_animation_widget.dart';
@@ -57,9 +58,6 @@ class _ProfileScreen extends State<ProfileScreen> {
   // Function to pick image from gallery
   Future<void> _pickImage(String uid) async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-
-    // final storageRef = FirebaseStorage.instance.ref();
-    // final imageRef = storageRef.child("user_1.jpg");
 
     if (pickedFile != null) {
       setState(() {
@@ -278,7 +276,9 @@ class _ProfileScreen extends State<ProfileScreen> {
                           bool? confirmation = await _showConfirmationDialog(
                               context, "Log Out?", "Are you sure?");
                           if (confirmation == true) {
+
                             await AuthService().signOut();
+                            await AuthService().signOutGoogle();
                             Navigator.pushAndRemoveUntil(
                               context,
                               MaterialPageRoute(
@@ -335,4 +335,5 @@ class _ProfileScreen extends State<ProfileScreen> {
       },
     );
   }
+
 }

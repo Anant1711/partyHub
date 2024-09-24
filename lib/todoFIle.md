@@ -1,9 +1,11 @@
 # Todo
 - [ ] Add camera/selfie for verification
 - [ ] Show ack pop-up after request sent to Host.
-- [ ] Add Party Delete/Cancel option for Host.
+- [X] Add Party Delete option for Host.
+- [ ] Check Internet connectivity
 - [ ] Add Ratings/Reviews for Users/Hosts
 - [ ] Bottom Sheet for Manage Join Request
+- [ ] Fix update PhoneNumber in firebase issue. 
 - [ ] User can send message/Query to host during sending request.
 - [ ] User can add Real Location while creating Parties. **[High Priority]** **[Important]**
 - [ ] User can set location and then app should show nearby parties. **[High Priority]** **[Important]**

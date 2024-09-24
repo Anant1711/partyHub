@@ -344,9 +344,6 @@ class _MyPartiesScreenState extends State<MyPartiesScreen> {
     return confirmation ?? false;  // Default to false if dialog is dismissed
   }
 
-
-
-
   Widget _buildDetailRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),

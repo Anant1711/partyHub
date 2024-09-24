@@ -40,23 +40,24 @@ class UserService {
   // }
 
   // Method to fetch current user profile data
-  Future<String> getUserNamee() async {
+  Future<String?> getUserNamee() async {
     User? currentUser = _auth.currentUser;
     if (currentUser != null) {
-      DocumentSnapshot userDoc = await _firestore.collection('users').doc(currentUser.uid).get();
-
-      if (userDoc.exists) {
-        return userDoc['name'];
-          // _nameController.text = userDoc['name'] ?? '';
-          // _emailController.text = currentUser.email ?? '';
-          // _phoneController.text = userDoc['phone'] ?? '';
-      }
+      return currentUser.displayName;
     }
-    return "Unknown User";
+    return null;
   }
 
   //Get User ID
   Future<String?> getUserId() async {
+
+    User? currentUser = _auth.currentUser;
+    if (currentUser != null) {
+        return currentUser.uid;
+    }
+    return null;
+
+
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? userId = prefs.getString('userId');

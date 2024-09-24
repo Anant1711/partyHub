@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:clique/services/Location_permission_service.dart';
 
 import '../services/MultiSelectChip.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class CreatePartyScreen extends StatefulWidget {
   const CreatePartyScreen({super.key});
@@ -35,19 +36,21 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
   List<String> selectedTags = [];
 
   final _formKey = GlobalKey<FormState>();
+  List<String> _suggestions = [];
   final String GoogleMapsAPIKey = "AIzaSyALYSRtamiN-lmyfFxS5VipSyWsBANLOMc";
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _locationController = TextEditingController();
+  late var _locationController = TextEditingController();
   final _maxAttendeesController = TextEditingController();
   DateTime? _selectedDateTime;
-  final DateFormat _dateFormat = DateFormat('yyyy-MM-dd');
+  final DateFormat _dateFormat = DateFormat('dd-MM-yyyy');
   final DateFormat _timeFormat = DateFormat('HH:mm');
   final TextEditingController _dateTimeController = TextEditingController();
   Uuid uuid = Uuid();
   String? _userName, _hostId;
   bool _isLoading = false; // Add loading flag
   NetworkUtitliy networkUtitliy = NetworkUtitliy();
+
 
   @override
   void initState() {
@@ -70,7 +73,8 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
       resizeToAvoidBottomInset: true,
       backgroundColor: const Color(0xffffffff),
       appBar: AppBar(
-        backgroundColor: const Color(0xffffffff),
+        surfaceTintColor: Colors.white,
+        backgroundColor: Colors.white,
         title: const Text('Create a Party',
             style: TextStyle(fontWeight: FontWeight.bold)),
       ),
@@ -92,21 +96,21 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
                   decoration: InputDecoration(
                     labelText: 'Party Name',
                     labelStyle: TextStyle(
-                        color: Colors.grey[700], fontWeight: FontWeight.bold),
+                      color: Colors.grey[700],
+                      fontWeight: FontWeight.bold,
+                    ),
                     hintText: 'Your party name',
                     hintStyle: TextStyle(color: Colors.grey[500]),
                     filled: true,
                     fillColor: Colors.grey[200],
-                    prefixIcon:
-                        const Icon(Icons.event, color: Colors.blueAccent),
+                    prefixIcon: const Icon(Icons.event, color: Colors.blueAccent),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                          BorderSide(color: Colors.blueAccent, width: 2),
+                      borderSide: BorderSide(color: Colors.blueAccent, width: 2),
                     ),
                     errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -116,6 +120,8 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(color: Colors.red, width: 2),
                     ),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 12.0),
+                    floatingLabelBehavior: FloatingLabelBehavior.auto, // This helps with label positioning
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -124,6 +130,7 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
                     return null;
                   },
                 ),
+
                 const SizedBox(height: 16),
 
                 // Description Field
@@ -146,11 +153,6 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
-                    // enabledBorder: OutlineInputBorder(
-                    //   borderRadius: BorderRadius.circular(12),
-                    //   borderSide:
-                    //       const BorderSide(color: Colors.grey, width: 1.5),
-                    // ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide:
@@ -178,7 +180,7 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
                 GestureDetector(
                   onTap: () {
                     //open Bottom Sheet
-                    _showPartyDetailsBottomSheet(context);
+                    _showLocationBottomSheet(context);
                     print("Location Pressed");
                   },
                   child: AbsorbPointer(
@@ -188,12 +190,11 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                       decoration: InputDecoration(
-                        labelText: 'Location',
                         labelStyle: TextStyle(
                             color: Colors.grey[700],
                             fontWeight: FontWeight.bold),
-                        hintText: 'Enter the location of the party',
                         hintStyle: TextStyle(color: Colors.grey[500]),
+                        labelText: "Location",
                         filled: true,
                         fillColor: Colors.grey[200],
                         prefixIcon:
@@ -202,11 +203,6 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
                         ),
-                        // enabledBorder: OutlineInputBorder(
-                        //   borderRadius: BorderRadius.circular(12),
-                        //   borderSide:
-                        //       const BorderSide(color: Colors.grey, width: 1.5),
-                        // ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide:
@@ -221,13 +217,12 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
                           borderSide: BorderSide(color: Colors.red, width: 2),
                         ),
                       ),
-                      //Todo: Un-Comment it.
-                      // validator: (value) {
-                      //   if (value == null || value.isEmpty) {
-                      //     return 'Please enter party location';
-                      //   }
-                      //   return null;
-                      // },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter party location';
+                        }
+                        return null;
+                      },
                     ),
                   ),
                 ),
@@ -252,11 +247,6 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
-                    // enabledBorder: OutlineInputBorder(
-                    //   borderRadius: BorderRadius.circular(12),
-                    //   borderSide:
-                    //       const BorderSide(color: Colors.grey, width: 1.5),
-                    // ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide:
@@ -312,11 +302,6 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
                         ),
-                        // enabledBorder: OutlineInputBorder(
-                        //   borderRadius: BorderRadius.circular(12),
-                        //   borderSide:
-                        //       const BorderSide(color: Colors.grey, width: 1.5),
-                        // ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide:
@@ -396,7 +381,7 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
       description: _descriptionController.text,
       dateTime: _selectedDateTime?.toIso8601String() ??
           DateTime.now().toIso8601String(),
-      location: "Default Pune",// _locationController.text,
+      location: _locationController.text,
       maxAttendees: int.parse(_maxAttendeesController.text),
       tags: selectedTags,
       hostName: _userName ?? 'Unknown Host',
@@ -454,128 +439,143 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
     });
   }
 
-  void _showPartyDetailsBottomSheet(BuildContext context) {
+  void _showLocationBottomSheet(BuildContext context) {
     showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.white,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
         ),
-        builder: (BuildContext context) {
-          final mediaQuery = MediaQuery.of(context);
-          final modalHeight = mediaQuery.size.height * 0.8;
+      ),
+      builder: (BuildContext context) {
+        final mediaQuery = MediaQuery.of(context);
+        final modalHeight = mediaQuery.size.height * 0.8;
 
-          return SizedBox(
-            height: modalHeight,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Center(
-                    child: Text(
-                      "Location",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 30,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Form(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: TextFormField(
-                        style: const TextStyle(
+        // Use StatefulBuilder to enable state management inside the modal sheet
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            return SizedBox(
+              height: modalHeight,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Center(
+                      child: Text(
+                        "Location",
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
+                          fontSize: 30,
                         ),
-                        decoration: InputDecoration(
-                          labelStyle: TextStyle(
-                              color: Colors.grey[700],
-                              fontWeight: FontWeight.bold),
-                          hintText: 'Search Location',
-                          hintStyle: TextStyle(color: Colors.grey[500]),
-                          filled: true,
-                          fillColor: Colors.grey[200],
-                          prefixIcon: const Icon(Icons.location_pin,
-                              color: Colors.blueAccent),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide:
-                                BorderSide(color: Colors.blueAccent, width: 2),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide:
-                                BorderSide(color: Colors.red, width: 1.5),
-                          ),
-                          focusedErrorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.red, width: 2),
-                          ),
-                        ),
-                        onChanged: (value) {
-                          //Todo: Save selected!
-                        },
-                        textInputAction: TextInputAction.search,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  Center(
-                    child: SizedBox(
-                      width: mediaQuery.size.width * 0.8, // Set button width
-                      child: TextButton(
-                        onPressed: () {
-                          //Todo: Use my current Location
-                          determinePosition().then((positionValue){
-                            Navigator.push(context,MaterialPageRoute(builder: (context)=>Googlemapsscreen(lat: positionValue.latitude, long: positionValue.longitude)));
-                          }).onError((error,stackTrace){print(error.toString());});
-
-                          //placeAutoComplete("Dhampur");
-                        },
-                        // style: buttonStyle,
-                        child: const Text(
-                          'Use my current location',
-                          style: TextStyle(
-                            color: Colors.blueAccent,
-                            fontSize: 13,
+                    const SizedBox(height: 20),
+                    Form(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: TextFormField(
+                          style: const TextStyle(
                             fontWeight: FontWeight.bold,
                           ),
+                          decoration: InputDecoration(
+                            labelStyle: TextStyle(
+                              color: Colors.grey[700],
+                              fontWeight: FontWeight.bold,
+                            ),
+                            hintText: 'Search Location',
+                            hintStyle: TextStyle(color: Colors.grey[500]),
+                            filled: true,
+                            fillColor: Colors.grey[200],
+                            prefixIcon: const Icon(Icons.location_pin,
+                                color: Colors.blueAccent),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide:
+                              BorderSide(color: Colors.blueAccent, width: 2),
+                            ),
+                          ),
+                          onChanged: (value) {
+                            // Fetch suggestions and update the list
+                            placeAutoComplete(value);
+                              // Use setModalState to trigger a re-render inside the modal sheet
+                              setModalState(() {});
+                          },
+                          textInputAction: TextInputAction.search,
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 20), // Add padding at the bottom
-                ],
+                    const SizedBox(height: 2),
+                    Center(
+                      child: SizedBox(
+                        width: mediaQuery.size.width * 0.8, // Set button width
+                        child: TextButton(
+                          onPressed: () {
+                            // Todo: Implement Current Location.
+                          },
+                          child: const Text(
+                            'Use my current location',
+                            style: TextStyle(
+                              color: Colors.blueAccent,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Expanded(
+                      // Display suggestions in a ListView
+                      child: ListView.builder(
+                        itemCount: _suggestions.length,
+                        itemBuilder: (context, index) {
+                          return ListTile(
+                            title: Text(_suggestions[index],style: TextStyle(fontWeight: FontWeight.bold),),
+                            onTap: () {
+                              // Handle selection here
+                              setModalState(() {
+                                _locationController.text = _suggestions[index];
+                              });
+                              Navigator.of(context).pop(true);
+                              FocusScope.of(context).unfocus();
+                              _suggestions.clear();
+                              print('Selected: ${_suggestions[index]}');
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 20), // Add padding at the bottom
+                  ],
+                ),
               ),
-            ),
-          );
-        });
+            );
+          },
+        );
+      },
+    );
   }
 
-  //Todo: Search Place is not working
   void placeAutoComplete(String query) async {
     Uri uri = Uri.https(
-        "maps.googleapis.com",
+      "maps.googleapis.com",
       "maps/api/place/autocomplete/json",
-        {
-          "input":query,
-          "key":GoogleMapsAPIKey,
-
-        }
+      {
+        "input": query,
+        "key": GoogleMapsAPIKey,
+      },
     );
 
     String? response = await NetworkUtitliy.fetchURL(uri);
-
+    print(response);
     if (response != null) {
       Map<String, dynamic> json = jsonDecode(response);
       if (json['status'] == 'OK') {
@@ -584,12 +584,39 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
             .map((prediction) => prediction['description'].toString())
             .toList();
 
-        print(suggestions); // You can now print or handle the suggestions
+        setState(() {
+          _suggestions = suggestions; // Update the suggestions list
+        });
       } else {
         print('Error fetching suggestions: ${json['status']}');
       }
     }
+  }
 
+  // Function to launch Google Maps URL
+  Future<void> _launchMapsUrl(String address) async {
+    // Create the Google Maps URL
+    final String googleMapsUrl =
+        'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(address)}';
+
+    // Launch the URL
+    if (await canLaunch(googleMapsUrl)) {
+      await launchUrl(googleMapsUrl as Uri);
+    } else {
+      throw 'Could not open Google Maps for $address';
+    }
+  }
+  void _launchMapOnAndroid(BuildContext context, double latitude, double longitude) async {
+    try {
+      const String markerLabel = 'Here';
+      final url = Uri.parse(
+          'geo:$latitude,$longitude?q=$latitude,$longitude($markerLabel)');
+      await launchUrl(url);
+    } catch (error) {
+      if (context.mounted) {
+        print(error);
+      }
+    }
   }
 
 }

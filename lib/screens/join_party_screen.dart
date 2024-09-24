@@ -445,7 +445,6 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
       return 'button';
     }
   }
-
   void _showPartyDetailsBottomSheet(BuildContext context, Party party) {
     DateTime parsedDateTime = DateTime.parse(party.dateTime);
     String date = DateFormat('dd-MM-yyyy').format(parsedDateTime);
@@ -461,6 +460,8 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
           topRight: Radius.circular(20),
         ),
       ),
+      isDismissible: true, // Can be dismissed but not dragged too far
+      enableDrag: false, // Prevent dragging the modal sheet upwards
       builder: (BuildContext context) {
         String partyStatus = _getPartyStatus(party); // Get the party status
         final mediaQuery = MediaQuery.of(context);
@@ -485,75 +486,53 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
 
               return SizedBox(
                 height: modalHeight,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Center(
-                        child: Text(
-                          party.name,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 30,
+                child: SingleChildScrollView( // Added this for scrollable content
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: Text(
+                            party.name,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 30,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      // Row(
-                      //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      //   children: [
-                      //     Expanded(
-                      //       child: _buildDetailRow('Host: ', party.hostName),
-                      //     ),
-                      //     TextButton(
-                      //       onPressed: () {
-                      //         Navigator.push(
-                      //           context,
-                      //           MaterialPageRoute(
-                      //             builder: (context) => publicUserProfile(
-                      //               userId: party.hostID,
-                      //             ),
-                      //           ),
-                      //         );
-                      //       },
-                      //       style: ButtonStyle(
-                      //         fixedSize: MaterialStateProperty.all(Size(150, 40)), // Set width and height here
-                      //       ),
-                      //       child: const Text("View Profile"),
-                      //     ),
-                      //   ],
-                      // ),
-                      _buildDetailRowWithButton("Host: ",party),
-                      _buildDetailRow("Date: ", date),
-                      _buildDetailRow("Time: ", time),
-                      _buildDetailRow('Location: ', party.location),
-                      _buildDetailRow('Description: ', party.description),
+                        const SizedBox(height: 20),
 
-                      // Only show attendees row if there are attendees
-                      if (attendeeUsernames.isNotEmpty)
-                        _buildDetailRow("Attendees: ", attendeeUsernames.join(", ")),
-                      if (attendeeUsernames.isEmpty)
-                        _buildDetailRow("Attendees: ", "No Attendees yet!"),
+                        _buildDetailRowWithButton("Host: ", party),
+                        _buildDetailRow("Date: ", date),
+                        _buildDetailRow("Time: ", time),
+                        _buildDetailRow('Location: ', party.location),
+                        _buildDetailRow('Description: ', party.description),
 
-                      _buildDetailRow('Tags: ', party.tags.join(", ")),
-                      const Spacer(), // Push the button to the bottom
+                        // Only show attendees row if there are attendees
+                        if (attendeeUsernames.isNotEmpty)
+                          _buildDetailRow("Attendees: ", attendeeUsernames.join(", ")),
+                        if (attendeeUsernames.isEmpty)
+                          _buildDetailRow("Attendees: ", "No Attendees yet!"),
 
-                      // Conditional content based on party status
-                      Center(
-                        child: SizedBox(
-                          width: mediaQuery.size.width * 0.8, // Set button width
-                          child: _buildStatusWidget(
-                            partyStatus,
-                            party,
-                            context,
-                            parsedDateTime,
+                        _buildDetailRow('Tags: ', party.tags.join(", ")),
+                        const SizedBox(height: 20), // Add padding above the button
+
+                        // Conditional content based on party status
+                        Center(
+                          child: SizedBox(
+                            width: mediaQuery.size.width * 0.8, // Set button width
+                            child: _buildStatusWidget(
+                              partyStatus,
+                              party,
+                              context,
+                              parsedDateTime,
+                            ),
                           ),
                         ),
-                      ),
-
-                      const SizedBox(height: 20), // Add padding at the bottom
-                    ],
+                        const SizedBox(height: 20), // Add padding at the bottom
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -563,6 +542,8 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
       },
     );
   }
+
+
 
   Widget _buildDetailRowWithButton(String label, Party party) {
     return Padding(

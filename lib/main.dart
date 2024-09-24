@@ -1,4 +1,5 @@
 import 'package:clique/screens/AuthScreen.dart';
+import 'package:clique/screens/PhoneAuthScreen.dart';
 import 'package:clique/screens/home_screen.dart';
 import 'package:clique/screens/profileScreen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -16,26 +17,14 @@ void main() async {
 
   try {
     await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,);
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
     FirebaseFirestore.instance.settings = const Settings(
       persistenceEnabled: true,
     );
     await FirebaseAppCheck.instance.activate(
-      // You can also use a `ReCaptchaEnterpriseProvider` provider instance as an
-      // argument for `webProvider`
       webProvider: ReCaptchaV3Provider('recaptcha-v3-site-key'),
-      // Default provider for Android is the Play Integrity provider. You can use the "AndroidProvider" enum to choose
-      // your preferred provider. Choose from:
-      // 1. Debug provider
-      // 2. Safety Net provider
-      // 3. Play Integrity provider
       androidProvider: AndroidProvider.debug,
-      // Default provider for iOS/macOS is the Device Check provider. You can use the "AppleProvider" enum to choose
-      // your preferred provider. Choose from:
-      // 1. Debug provider
-      // 2. Device Check provider
-      // 3. App Attest provider
-      // 4. App Attest provider with fallback to Device Check provider (App Attest provider is only available on iOS 14.0+, macOS 14.0+)
       appleProvider: AppleProvider.appAttest,
     );
   } catch (e) {
@@ -54,15 +43,17 @@ class PartyHubApp extends StatelessWidget {
       color: const Color(0xffDCDBE2),
       theme: _buildTheme(Brightness.light),
       title: 'Clique',
-      home: AuthenticationWrapper(),
+      home: AuthenticationWrapper(), // Use AuthenticationWrapper here
       routes: {
         '/profile': (context) => ProfileScreen(),
+        '/phoneAuth': (context) => PhoneAuthScreen(),
+        '/home': (context) => HomeScreen(),
       },
     );
   }
+
   ThemeData _buildTheme(brightness) {
     var baseTheme = ThemeData(brightness: brightness);
-
     return baseTheme.copyWith(
       textTheme: GoogleFonts.latoTextTheme(baseTheme.textTheme),
     );
@@ -76,14 +67,48 @@ class AuthenticationWrapper extends StatelessWidget {
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return LoadingAnimationWidget.fallingDot(color: const Color(0xff2226BA), size: 50);
+          return Center(
+            child: LoadingAnimationWidget.fallingDot(
+              color: const Color(0xff2226BA),
+              size: 50,
+            ),
+          );
         } else if (snapshot.hasData) {
-          return HomeScreen(); // Use HomeScreen here
+          // If the user is authenticated, check if the phone is verified
+          return FutureBuilder<DocumentSnapshot>(
+            future: FirebaseFirestore.instance
+                .collection('users')
+                .doc(snapshot.data!.uid)
+                .get(),
+            builder: (context, AsyncSnapshot<DocumentSnapshot> userSnapshot) {
+              if (userSnapshot.connectionState == ConnectionState.waiting) {
+                return Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
+
+              if (userSnapshot.hasData && userSnapshot.data!.exists) {
+                bool isPhoneVerified =
+                    userSnapshot.data!['isPhoneNumberVerified'] ?? false;
+
+                if (isPhoneVerified) {
+                  // Navigate to homepage if the phone is verified
+                  return HomeScreen();
+                } else {
+                  // If phone is not verified, navigate to PhoneAuthScreen
+                  return PhoneAuthScreen();
+                }
+              }
+
+              // In case user document doesn't exist, navigate to AuthScreen
+              return AuthScreen();
+            },
+          );
         } else {
-          return AuthScreen(); // Show AuthScreen for unauthenticated users
+          // If user is not authenticated, show the AuthScreen
+          return AuthScreen();
         }
       },
     );
   }
-
 }
