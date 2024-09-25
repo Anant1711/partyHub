@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:clique/screens/GoogleMapsScreen.dart';
 import 'package:clique/services/NetworkUtitliy.dart';
+import 'package:clique/services/UserService.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:clique/models/createParty.dart';
 import 'package:clique/services/party_service.dart';
@@ -21,6 +23,7 @@ class CreatePartyScreen extends StatefulWidget {
 }
 
 class _CreatePartyScreenState extends State<CreatePartyScreen> {
+  //////////////////////////////// -Variables- ////////////////////////////////
   final List<String> predefinedTags = [
     'Alcoholic',
     'Non-Alcoholic',
@@ -34,9 +37,9 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
   ];
 
   List<String> selectedTags = [];
-
   final _formKey = GlobalKey<FormState>();
   List<String> _suggestions = [];
+  List<String> _placeId = [];
   final String GoogleMapsAPIKey = "AIzaSyALYSRtamiN-lmyfFxS5VipSyWsBANLOMc";
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -50,7 +53,9 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
   String? _userName, _hostId;
   bool _isLoading = false; // Add loading flag
   NetworkUtitliy networkUtitliy = NetworkUtitliy();
+  late String mCurrentLocation,mLocationLink;
 
+  //////////////////////////////// -Variables- ////////////////////////////////
 
   @override
   void initState() {
@@ -88,6 +93,7 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
               children: [
                 // Party Name Field
                 TextFormField(
+                  textCapitalization: TextCapitalization.sentences,
                   controller: _nameController,
                   style: const TextStyle(
                     color: Colors.black87,
@@ -135,6 +141,7 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
 
                 // Description Field
                 TextFormField(
+                  textCapitalization: TextCapitalization.sentences,
                   controller: _descriptionController,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
@@ -382,6 +389,7 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
       dateTime: _selectedDateTime?.toIso8601String() ??
           DateTime.now().toIso8601String(),
       location: _locationController.text,
+      locationLink: mLocationLink,
       maxAttendees: int.parse(_maxAttendeesController.text),
       tags: selectedTags,
       hostName: _userName ?? 'Unknown Host',
@@ -504,7 +512,7 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
                           ),
                           onChanged: (value) {
                             // Fetch suggestions and update the list
-                            placeAutoComplete(value);
+                            _placeAutoComplete(value);
                               // Use setModalState to trigger a re-render inside the modal sheet
                               setModalState(() {});
                           },
@@ -518,7 +526,14 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
                         width: mediaQuery.size.width * 0.8, // Set button width
                         child: TextButton(
                           onPressed: () {
-                            // Todo: Implement Current Location.
+                            print("User My Current Location button pressed");
+                            _getCurrentLocation();
+                            setModalState(() {
+                              _locationController.text = mCurrentLocation;
+                            });
+                            Navigator.of(context).pop(true);
+                            FocusScope.of(context).unfocus();
+                            _suggestions.clear();
                           },
                           child: const Text(
                             'Use my current location',
@@ -544,6 +559,8 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
                               setModalState(() {
                                 _locationController.text = _suggestions[index];
                               });
+
+                              _fetchPlaceDetails(_placeId[index]);
                               Navigator.of(context).pop(true);
                               FocusScope.of(context).unfocus();
                               _suggestions.clear();
@@ -564,7 +581,7 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
     );
   }
 
-  void placeAutoComplete(String query) async {
+  void _placeAutoComplete(String query) async {
     Uri uri = Uri.https(
       "maps.googleapis.com",
       "maps/api/place/autocomplete/json",
@@ -580,12 +597,19 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
       Map<String, dynamic> json = jsonDecode(response);
       if (json['status'] == 'OK') {
         List<dynamic> predictions = json['predictions'];
-        List<String> suggestions = predictions
-            .map((prediction) => prediction['description'].toString())
-            .toList();
+        List<String> placeId = [];
+        List<String> suggestions = [];
+        // List<String> suggestions = predictions
+        //     .map((prediction) => prediction['description'].toString())
+        //     .toList();
+        for(var prediction in predictions){
+          suggestions.add(prediction['description'].toString());
+          placeId.add(prediction['place_id'].toString());
+        }
 
         setState(() {
           _suggestions = suggestions; // Update the suggestions list
+          _placeId = placeId;
         });
       } else {
         print('Error fetching suggestions: ${json['status']}');
@@ -593,30 +617,108 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
     }
   }
 
-  // Function to launch Google Maps URL
-  Future<void> _launchMapsUrl(String address) async {
-    // Create the Google Maps URL
-    final String googleMapsUrl =
-        'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(address)}';
+  // Function to get current location
+  Future<void> _getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
 
-    // Launch the URL
-    if (await canLaunch(googleMapsUrl)) {
-      await launchUrl(googleMapsUrl as Uri);
-    } else {
-      throw 'Could not open Google Maps for $address';
+    // Check if location services are enabled
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      // Location services are not enabled, so request the user to enable them
+      return Future.error('Location services are disabled.');
     }
-  }
-  void _launchMapOnAndroid(BuildContext context, double latitude, double longitude) async {
-    try {
-      const String markerLabel = 'Here';
-      final url = Uri.parse(
-          'geo:$latitude,$longitude?q=$latitude,$longitude($markerLabel)');
-      await launchUrl(url);
-    } catch (error) {
-      if (context.mounted) {
-        print(error);
+
+    // Check for permission
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        // Permissions are denied, next time you could try requesting permissions again
+        return Future.error('Location permissions are denied.');
       }
     }
+
+    if (permission == LocationPermission.deniedForever) {
+      // Permissions are denied forever, handle appropriately
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
+
+    // Get the current position
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
+
+    // Use the current coordinates (latitude, longitude) to fetch the location address
+    print("lat: ${position.latitude} long: ${position.longitude}");
+    _reverseGeocode(position.latitude, position.longitude);
+    generateGoogleMapsLink(position.latitude, position.longitude);
+  }
+
+  // Reverse geocode to get address from lat/lng
+  Future<void> _reverseGeocode(double lat, double lng) async {
+    late String currentLocation;
+    Uri uri = Uri.https(
+      "maps.googleapis.com",
+      "maps/api/geocode/json",
+      {
+        "latlng": "$lat,$lng",
+        "key": GoogleMapsAPIKey,
+      },
+    );
+
+    String? response = await NetworkUtitliy.fetchURL(uri);
+    if (response != null) {
+      Map<String, dynamic> json = jsonDecode(response);
+      print(response);
+      if (json['status'] == 'OK') {
+        currentLocation = json['results'][0]['formatted_address'];
+        print("Current Location: $currentLocation");
+        mCurrentLocation = currentLocation;
+
+        setState(() {
+          _suggestions.insert(0, "$currentLocation");
+        });
+      } else {
+        print('Error fetching location: ${json['status']}');
+        print('Error details: ${json['error_message']}'); // Log detailed error message
+      }
+    }
+  }
+
+  void _fetchPlaceDetails(String placeId) async {
+    print("Place ID: $placeId");
+    Uri uri = Uri.https(
+      "maps.googleapis.com",
+      "maps/api/place/details/json",
+      {
+        "place_id": placeId,
+        "key": GoogleMapsAPIKey,
+      },
+    );
+
+    String? response = await NetworkUtitliy.fetchURL(uri);
+    print(response);
+    if (response != null) {
+      Map<String, dynamic> json = jsonDecode(response);
+      if (json['status'] == 'OK') {
+        Map<String, dynamic> location = json['result']['geometry']['location'];
+        double latitude = location['lat'];
+        double longitude = location['lng'];
+
+        generateGoogleMapsLink(latitude, longitude);
+        print("Lat: $latitude, Lng: $longitude");
+
+      } else {
+        print('Error fetching place details: ${json['status']}');
+      }
+    }
+  }
+
+  //For Redirect user to Google maps with party location
+  String generateGoogleMapsLink(double lat, double lng) {
+    mLocationLink = "https://www.google.com/maps/search/?api=1&query=$lat,$lng";
+    return "https://www.google.com/maps/search/?api=1&query=$lat,$lng";
   }
 
 }

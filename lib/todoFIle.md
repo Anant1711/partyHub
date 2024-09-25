@@ -1,17 +1,18 @@
 # Todo
 - [ ] Add camera/selfie for verification
 - [ ] Show ack pop-up after request sent to Host.
-- [X] Add Party Delete option for Host.
-- [ ] Check Internet connectivity
 - [ ] Add Ratings/Reviews for Users/Hosts
 - [ ] Bottom Sheet for Manage Join Request
-- [ ] Fix update PhoneNumber in firebase issue. 
 - [ ] User can send message/Query to host during sending request.
-- [ ] User can add Real Location while creating Parties. **[High Priority]** **[Important]**
+- [X] User can add Real Location while creating Parties. **[High Priority]** **[Important]**
+- [X] User can add Current Location and Location Link while creating Parties. **[High Priority]** **[Important]**
 - [ ] User can set location and then app should show nearby parties. **[High Priority]** **[Important]**
-- [ ] Authentication part -> Check if email is valid or not, make user only after taking Full Name. **[High Priority]**
+- [X] Authentication part:- Gmail + Phone Auth **[High Priority]**
 - [ ] Create a Shimmer effect in join_party_scree for loading parties.
 - [ ] Make UI more attractive **[Least Priority]**
+- [X] Add Party Delete option for Host.
+- [X] Fix update PhoneNumber in firebase issue.
+- [X] Check Internet connectivity - Globally
 - [X] ~User can cancel/revert request from Host.~
 - [X] ~Create a public Profile view~
 - [X] ~Create Screen for Edit Profile.~

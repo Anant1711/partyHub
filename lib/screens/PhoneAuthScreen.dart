@@ -9,6 +9,7 @@ class PhoneAuthScreen extends StatefulWidget {
 }
 
 class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
+  //////////////////////////////// -Variables- ////////////////////////////////
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final _formKey = GlobalKey<FormState>();
   String _verificationId = '';
@@ -17,6 +18,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   String _errorMessage = '';
   late String phoneNumber;
   bool _isOtpVisible = false; // To track whether the OTP widget should be visible
+  //////////////////////////////// -Variables- ////////////////////////////////
 
 
   // Send OTP to the phone number
@@ -101,15 +103,12 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
             .doc(currentUser.uid)
             .update({
           'isPhoneNumberVerified': true,
-          'phoneNumber': currentUser.phoneNumber,
+          'phoneNumber': _phoneController.text,
         });
 
         SharedPreferences prefs = await SharedPreferences.getInstance();
-        prefs.setString("userName", currentUser.displayName!);
-        prefs.setString("userId", currentUser.uid);
         prefs.setString("phoneNumber", phoneNumber);
 
-        print("PHONE NUMBER: ${currentUser.phoneNumber}");
         // Phone number successfully linked, navigate to Homepage
         Navigator.pushReplacementNamed(context, '/home');
       } catch (e) {
@@ -120,6 +119,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
     }
   }
 
+  //Main Widget
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -225,6 +225,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
+                        keyboardType: TextInputType.phone,
                         controller: _otpController,
                         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         decoration: InputDecoration(

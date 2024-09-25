@@ -5,14 +5,15 @@ import 'package:uuid/uuid.dart';
 import '../models/joinRequestModel.dart';
 
 class PartyService {
+  //////////////////////////////// -Variables- ////////////////////////////////
   Uuid uid = Uuid();
   // Collection name for join requests
   final String REQUEST_COLLECTION = "joinRequests";
 
   //Collection name for partyDetails
   final String PREF_NAME = "partyDetails";
-
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  //////////////////////////////// -Variables- ////////////////////////////////
 
   // Create a new party
   Future<void> createParty(Party party) async {
@@ -161,7 +162,6 @@ class PartyService {
 
   }
 
-
   //For Host
   Future<List<Map<String, dynamic>>> getJoinRequests(String hostId) async {
     try {
@@ -208,6 +208,7 @@ class PartyService {
           hostName: partyData.hostName,
           hostID: partyData.hostID,
           pendingRequests: partyData.pendingRequests,
+          locationLink: partyData.locationLink,
         );
         await _firestore.collection(PREF_NAME).doc(partyId).update(updatedParty.toMap());
       }

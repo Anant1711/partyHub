@@ -1,17 +1,20 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Party {
+  //////////////////////////////// -Variables- ////////////////////////////////
   final String id;
   final String name;
   final String description;
   final String dateTime;
   final String location;
+  final String locationLink;
   final int maxAttendees;
   final List<String> attendees;
   final List<String> tags;
   final String hostName;
   final String hostID;
-  final List<String> pendingRequests; // Add this field
+  final List<String> pendingRequests;
+  //////////////////////////////// -Variables- ////////////////////////////////
 
   Party({
     required this.id,
@@ -19,6 +22,7 @@ class Party {
     required this.description,
     required this.dateTime,
     required this.location,
+    required this.locationLink,
     required this.maxAttendees,
     required this.tags,
     this.attendees = const [],
@@ -34,6 +38,7 @@ class Party {
       'description': description,
       'dateTime': dateTime,
       'location': location,
+      'locationLink':locationLink,
       'maxAttendees': maxAttendees,
       'attendees': attendees,
       'tags': tags,
@@ -50,6 +55,7 @@ class Party {
       description: map['description'] as String? ?? '',
       dateTime: map['dateTime'] as String? ?? '',
       location: map['location'] as String? ?? 'Unknown Location',
+      locationLink: map['locationLink'] as String ?? 'Unknown Location',
       maxAttendees: map['maxAttendees'] as int? ?? 0,
 
       attendees: map['attendees'] != null
@@ -76,6 +82,7 @@ class Party {
       description: map['description'] as String? ?? '',
       dateTime: map['dateTime'] as String? ?? '',
       location: map['location'] as String? ?? 'Unknown Location',
+      locationLink: map['locationLink'] as String ?? 'Unknown Location',
       maxAttendees: map['maxAttendees'] as int? ?? 0,
       attendees: map['attendees'] != null
           ? List<String>.from(map['attendees'] as List)

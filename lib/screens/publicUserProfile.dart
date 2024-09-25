@@ -250,7 +250,7 @@ class _PublicuserprofileState extends State<publicUserProfile> {
                             children: [
                               // Show only one party by default
                               Card(
-                                elevation: 0.3,
+                                elevation: 0.55,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(15.0),
                                 ),
@@ -258,11 +258,14 @@ class _PublicuserprofileState extends State<publicUserProfile> {
                                 margin: const EdgeInsets.fromLTRB(17.0, 8.0, 17.0, 8.0),
                                 child: ListTile(
                                   contentPadding: EdgeInsets.all(15),
-                                  title: Text(
-                                    latestParty.name,
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
+                                  title: Flexible(
+                                    child: Text(
+                                      overflow: TextOverflow.ellipsis,
+                                      latestParty.name,
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                   subtitle: Column(
@@ -273,7 +276,7 @@ class _PublicuserprofileState extends State<publicUserProfile> {
                                         children: [
                                           Icon(Icons.calendar_today, size: 16),
                                           SizedBox(width: 5),
-                                          Text(DateFormat('dd-MM-yyyy').format(DateTime.parse(latestParty.dateTime)) + ', ' + DateFormat('hh:mm a').format(DateTime.parse(latestParty.dateTime)), style: TextStyle(fontSize: 14)),
+                                          Flexible(child: Text(overflow: TextOverflow.ellipsis,DateFormat('dd-MM-yyyy').format(DateTime.parse(latestParty.dateTime)) + ', ' + DateFormat('hh:mm a').format(DateTime.parse(latestParty.dateTime)), style: TextStyle(fontSize: 14))),
                                         ],
                                       ),
                                       SizedBox(height: 10),
@@ -281,7 +284,7 @@ class _PublicuserprofileState extends State<publicUserProfile> {
                                         children: [
                                           Icon(Icons.location_on, size: 16),
                                           SizedBox(width: 5),
-                                          Text(latestParty.location, style: TextStyle(fontSize: 14)),
+                                          Flexible(child: Text(overflow: TextOverflow.ellipsis,latestParty.location, style: TextStyle(fontSize: 14))),
                                         ],
                                       ),
                                       SizedBox(height: 10),
@@ -289,7 +292,7 @@ class _PublicuserprofileState extends State<publicUserProfile> {
                                         children: [
                                           Icon(Icons.people, size: 16),
                                           SizedBox(width: 5),
-                                          Text('Attendees: ${latestParty.attendees.map((userId) => usernames[userId] ?? 'Unknown').join(', ')}', style: TextStyle(fontSize: 14)),
+                                          Flexible(child: Text(overflow: TextOverflow.ellipsis,'Attendees: ${latestParty.attendees.map((userId) => usernames[userId] ?? 'Unknown').join(', ')}', style: TextStyle(fontSize: 14))),
                                         ],
                                       ),
                                     ],
@@ -315,11 +318,14 @@ class _PublicuserprofileState extends State<publicUserProfile> {
                                       margin: const EdgeInsets.fromLTRB(17.0, 8.0, 17.0, 8.0),
                                       child: ListTile(
                                         contentPadding: EdgeInsets.all(15),
-                                        title: Text(
-                                          party.name,
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
+                                        title: Flexible(
+                                          child: Text(
+                                            overflow: TextOverflow.ellipsis,
+                                            party.name,
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                         ),
                                         subtitle: Column(
@@ -330,7 +336,7 @@ class _PublicuserprofileState extends State<publicUserProfile> {
                                               children: [
                                                 Icon(Icons.calendar_today, size: 16),
                                                 SizedBox(width: 5),
-                                                Text(DateFormat('dd-MM-yyyy').format(DateTime.parse(party.dateTime)) + ', ' + DateFormat('hh:mm a').format(DateTime.parse(party.dateTime)), style: TextStyle(fontSize: 14)),
+                                                Flexible(child: Text(overflow: TextOverflow.ellipsis,DateFormat('dd-MM-yyyy').format(DateTime.parse(party.dateTime)) + ', ' + DateFormat('hh:mm a').format(DateTime.parse(party.dateTime)), style: TextStyle(fontSize: 14))),
                                               ],
                                             ),
                                             SizedBox(height: 10),
@@ -338,7 +344,7 @@ class _PublicuserprofileState extends State<publicUserProfile> {
                                               children: [
                                                 Icon(Icons.location_on, size: 16),
                                                 SizedBox(width: 5),
-                                                Text(party.location, style: TextStyle(fontSize: 14)),
+                                                Flexible(child: Text(overflow: TextOverflow.ellipsis,party.location, style: TextStyle(fontSize: 14))),
                                               ],
                                             ),
                                             SizedBox(height: 10),
@@ -346,7 +352,7 @@ class _PublicuserprofileState extends State<publicUserProfile> {
                                               children: [
                                                 Icon(Icons.people, size: 16),
                                                 SizedBox(width: 5),
-                                                Text('Attendees: ${attendeeNames}', style: TextStyle(fontSize: 14)),
+                                                Flexible(child: Text(overflow: TextOverflow.ellipsis,'Attendees: ${attendeeNames}', style: TextStyle(fontSize: 14))),
                                               ],
                                             ),
                                           ],

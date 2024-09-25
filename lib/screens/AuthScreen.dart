@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthScreen extends StatefulWidget {
   @override
@@ -31,10 +32,17 @@ class _AuthScreenState extends State<AuthScreen> {
       final UserCredential userCredential =
           await _auth.signInWithCredential(credential);
       final User? currentUser = userCredential.user;
+      SharedPreferences prefs = await SharedPreferences.getInstance();
       // Check if the user is new
       if (userCredential.additionalUserInfo?.isNewUser == true) {
         // Navigate to Phone Authentication page for new users
         if (currentUser != null) {
+
+          //Adding in Shared Pref
+          prefs.setString("userName", currentUser.displayName ?? '');
+          prefs.setString("userId", currentUser.uid);
+          prefs.setString("email", currentUser.email??'');
+
           //Creating Field on CLOUD
           await FirebaseFirestore.instance
               .collection('users')
@@ -48,10 +56,13 @@ class _AuthScreenState extends State<AuthScreen> {
         }
         Navigator.pushReplacementNamed(context, '/phoneAuth');
       } else {
+        prefs.setString("userName", currentUser?.displayName ?? '');
+        prefs.setString("userId", currentUser!.uid);
+        prefs.setString("email", currentUser.email??'');
         // Navigate to Homepage for existing users
         DocumentSnapshot userDoc = await FirebaseFirestore.instance
             .collection('users')
-            .doc(currentUser?.uid)
+            .doc(currentUser.uid)
             .get();
         bool isPhoneVerified = userDoc['isPhoneNumberVerified'] ?? false;
 

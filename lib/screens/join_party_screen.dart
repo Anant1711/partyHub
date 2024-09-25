@@ -5,6 +5,7 @@ import 'package:clique/models/createParty.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 import '../models/joinRequestModel.dart';
 import '../services/UserService.dart';
@@ -18,6 +19,7 @@ class JoinPartyScreen extends StatefulWidget {
 }
 
 class _JoinPartyScreenState extends State<JoinPartyScreen> {
+  //////////////////////////////// -Variables- ////////////////////////////////
   CommonUtility commonUtility = CommonUtility();
   late Future<List<Party>> _partiesFuture;
   late Future<Map<String, String>> _usernamesFuture;
@@ -26,6 +28,7 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
   PartyService partyservice = new PartyService();
   late bool hasPendingRequest;
   Uuid uid = Uuid();
+  //////////////////////////////// -Variables- ////////////////////////////////
 
   @override
   void initState() {
@@ -130,6 +133,150 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
     });
   }
 
+  Future<String?> _getUserId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('userId');
+  }
+
+  Future<String?> _getUserName() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('userName');
+  }
+
+  Future<List<String>> _getAttendeeUsernames(List<String> attendeeIds) async {
+    List<String> attendeeUsernames = [];
+    for (String userId in attendeeIds) {
+      String? username = await UserService()
+          .getUserNameByID(userId); // Fetch username by userId
+      if (username != null) {
+        attendeeUsernames.add(username); // Add the fetched username to the list
+      } else {
+        attendeeUsernames.add('Unknown'); // Fallback for missing usernames
+      }
+    }
+    return attendeeUsernames; // Return the list of usernames
+  }
+
+  String _getPartyStatus(Party party) {
+    if (party.attendees.contains(mUserId)) {
+      return "Joined";
+    } else if (party.attendees.length == party.maxAttendees) {
+      return "Full";
+    } else if (party.pendingRequests.contains(mUserId)) {
+      return "Pending";
+    } else {
+      return 'button';
+    }
+  }
+
+  void _showPartyDetailsBottomSheet(BuildContext context, Party party) {
+    DateTime parsedDateTime = DateTime.parse(party.dateTime);
+    String date = DateFormat('dd-MM-yyyy').format(parsedDateTime);
+    String time = DateFormat('hh:mm a').format(parsedDateTime);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      isDismissible: true, // Can be dismissed but not dragged too far
+      enableDrag: false, // Prevent dragging the modal sheet upwards
+      builder: (BuildContext context) {
+        String partyStatus = _getPartyStatus(party); // Get the party status
+        final mediaQuery = MediaQuery.of(context);
+        final modalHeight = mediaQuery.size.height * 0.6;
+
+        return FutureBuilder<List<String>>(
+          future: _getAttendeeUsernames(party.attendees), // Fetch usernames for attendees
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(
+                child: LoadingAnimationWidget.fallingDot(
+                  color: Color(0xff2226BA),
+                  size: 50,
+                ), // Display a loading indicator
+              );
+            } else if (snapshot.hasError) {
+              return Center(
+                child: Text('Error: ${snapshot.error}'), // Handle any errors
+              );
+            } else {
+              final attendeeUsernames = snapshot.data ?? [];
+
+              return SizedBox(
+                height: modalHeight,
+                child: SingleChildScrollView( // Added this for scrollable content
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: Text(
+                            party.name,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 30,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        _buildDetailRowWithButton("Host: ", party),
+                        _buildDetailRow("Date: ", date),
+                        _buildDetailRow("Time: ", time),
+                        _buildDetailRow('Location: ', party.location),
+                        _buildDetailRowWithLocationButton("Locate me on Maps", party),
+                        _buildDetailRow('Description: ', party.description),
+
+                        // Only show attendees row if there are attendees
+                        if (attendeeUsernames.isNotEmpty)
+                          _buildDetailRow("Attendees: ", attendeeUsernames.join(", ")),
+                        if (attendeeUsernames.isEmpty)
+                          _buildDetailRow("Attendees: ", "No Attendees yet!"),
+
+                        _buildDetailRow('Tags: ', party.tags.join(", ")),
+                        const SizedBox(height: 20), // Add padding above the button
+
+                        // Conditional content based on party status
+                        Center(
+                          child: SizedBox(
+                            width: mediaQuery.size.width * 0.8, // Set button width
+                            child: _buildStatusWidget(
+                              partyStatus,
+                              party,
+                              context,
+                              parsedDateTime,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20), // Add padding at the bottom
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _openGoogleMapsLink(String url) async {
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not open Google Maps link: $url';
+    }
+  }
+
+  //Main Widget
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -294,30 +441,6 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
     );
   }
 
-  Future<String?> _getUserId() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString('userId');
-  }
-
-  Future<String?> _getUserName() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString('userName');
-  }
-
-  Future<List<String>> _getAttendeeUsernames(List<String> attendeeIds) async {
-    List<String> attendeeUsernames = [];
-    for (String userId in attendeeIds) {
-      String? username = await UserService()
-          .getUserNameByID(userId); // Fetch username by userId
-      if (username != null) {
-        attendeeUsernames.add(username); // Add the fetched username to the list
-      } else {
-        attendeeUsernames.add('Unknown'); // Fallback for missing usernames
-      }
-    }
-    return attendeeUsernames; // Return the list of usernames
-  }
-
   Widget _buildDetailRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -334,14 +457,13 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
             child: Text(
               value,
               style: TextStyle(
-                  fontSize: 17,),
+                fontSize: 17,),
             ),
           ),
         ],
       ),
     );
   }
-
   // Method to determine what widget to show based on partyStatus
   Widget _buildStatusWidget(String partyStatus, Party party, BuildContext context, DateTime parsedDateTime) {
     // Define a common style for all buttons
@@ -408,7 +530,7 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
         child: ElevatedButton(
           onPressed: () async {
             String? userName =
-                await _getUserName(); // Get username for confirmation
+            await _getUserName(); // Get username for confirmation
             if (mUserId != null && userName != null) {
               _confirmJoinParty(party, userName, mUserId,
                   parsedDateTime); // Confirm joining party
@@ -433,118 +555,6 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
       );
     }
   }
-
-  String _getPartyStatus(Party party) {
-    if (party.attendees.contains(mUserId)) {
-      return "Joined";
-    } else if (party.attendees.length == party.maxAttendees) {
-      return "Full";
-    } else if (party.pendingRequests.contains(mUserId)) {
-      return "Pending";
-    } else {
-      return 'button';
-    }
-  }
-  void _showPartyDetailsBottomSheet(BuildContext context, Party party) {
-    DateTime parsedDateTime = DateTime.parse(party.dateTime);
-    String date = DateFormat('dd-MM-yyyy').format(parsedDateTime);
-    String time = DateFormat('hh:mm a').format(parsedDateTime);
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
-      ),
-      isDismissible: true, // Can be dismissed but not dragged too far
-      enableDrag: false, // Prevent dragging the modal sheet upwards
-      builder: (BuildContext context) {
-        String partyStatus = _getPartyStatus(party); // Get the party status
-        final mediaQuery = MediaQuery.of(context);
-        final modalHeight = mediaQuery.size.height * 0.6;
-
-        return FutureBuilder<List<String>>(
-          future: _getAttendeeUsernames(party.attendees), // Fetch usernames for attendees
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(
-                child: LoadingAnimationWidget.fallingDot(
-                  color: Color(0xff2226BA),
-                  size: 50,
-                ), // Display a loading indicator
-              );
-            } else if (snapshot.hasError) {
-              return Center(
-                child: Text('Error: ${snapshot.error}'), // Handle any errors
-              );
-            } else {
-              final attendeeUsernames = snapshot.data ?? [];
-
-              return SizedBox(
-                height: modalHeight,
-                child: SingleChildScrollView( // Added this for scrollable content
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Center(
-                          child: Text(
-                            party.name,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 30,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-
-                        _buildDetailRowWithButton("Host: ", party),
-                        _buildDetailRow("Date: ", date),
-                        _buildDetailRow("Time: ", time),
-                        _buildDetailRow('Location: ', party.location),
-                        _buildDetailRow('Description: ', party.description),
-
-                        // Only show attendees row if there are attendees
-                        if (attendeeUsernames.isNotEmpty)
-                          _buildDetailRow("Attendees: ", attendeeUsernames.join(", ")),
-                        if (attendeeUsernames.isEmpty)
-                          _buildDetailRow("Attendees: ", "No Attendees yet!"),
-
-                        _buildDetailRow('Tags: ', party.tags.join(", ")),
-                        const SizedBox(height: 20), // Add padding above the button
-
-                        // Conditional content based on party status
-                        Center(
-                          child: SizedBox(
-                            width: mediaQuery.size.width * 0.8, // Set button width
-                            child: _buildStatusWidget(
-                              partyStatus,
-                              party,
-                              context,
-                              parsedDateTime,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20), // Add padding at the bottom
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }
-          },
-        );
-      },
-    );
-  }
-
-
-
   Widget _buildDetailRowWithButton(String label, Party party) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -576,6 +586,42 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
               ),
               child: Text(
                 "${party.hostName}",
+                style: const TextStyle(
+                  fontSize: 17,
+                  color: Colors.blue, // Adjust as needed
+                  fontWeight: FontWeight.normal,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  Widget _buildDetailRowWithLocationButton(String label, Party party) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center, // Aligns widgets vertically in the center
+        children: [
+          SizedBox(
+            width: 100, // Fixed width to ensure alignment
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.bold,fontSize: 17),
+              overflow: TextOverflow.ellipsis, // Handles text overflow
+            ),
+          ),
+          Expanded(
+            child: TextButton(
+              onPressed: () {
+                _openGoogleMapsLink(party.locationLink);
+              },
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero, // Remove extra padding
+              ),
+              child: const Text(
+                "Locate me",
                 style: const TextStyle(
                   fontSize: 17,
                   color: Colors.blue, // Adjust as needed

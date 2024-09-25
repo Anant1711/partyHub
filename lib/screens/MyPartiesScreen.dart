@@ -13,10 +13,12 @@ class MyPartiesScreen extends StatefulWidget {
 }
 
 class _MyPartiesScreenState extends State<MyPartiesScreen> {
+  //////////////////////////////// -Variables- ////////////////////////////////
   late Future<List<Party>> _myPartiesFuture;
   late Future<Map<String, String>> _usernamesFuture;
   PartyService partyService = PartyService();
   String? _userId;
+  //////////////////////////////// -Variables- ////////////////////////////////
 
   @override
   void initState() {
@@ -86,13 +88,12 @@ class _MyPartiesScreenState extends State<MyPartiesScreen> {
                       String time = DateFormat('hh:mm a').format(parsedDateTime);
 
                       return Card(
-                        elevation:0.55,
+                        elevation: 0.55,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15.0),
                         ),
                         color: Colors.grey[200],
-                        margin: const EdgeInsets.fromLTRB(
-                            17.0, 8.0, 17.0, 8.0),
+                        margin: const EdgeInsets.fromLTRB(17.0, 8.0, 17.0, 8.0),
                         child: ListTile(
                           contentPadding: EdgeInsets.all(15),
                           title: Text(
@@ -107,7 +108,13 @@ class _MyPartiesScreenState extends State<MyPartiesScreen> {
                                 children: [
                                   Icon(Icons.calendar_today, size: 16),
                                   SizedBox(width: 5),
-                                  Text("${date} , ${time}", style: TextStyle(fontSize: 14)),
+                                  Flexible(
+                                    child: Text(
+                                      "$date , $time",
+                                      style: TextStyle(fontSize: 14),
+                                      overflow: TextOverflow.ellipsis, // Ensures long text is truncated
+                                    ),
+                                  ),
                                 ],
                               ),
                               SizedBox(height: 10),
@@ -115,7 +122,13 @@ class _MyPartiesScreenState extends State<MyPartiesScreen> {
                                 children: [
                                   Icon(Icons.location_on, size: 16),
                                   SizedBox(width: 5),
-                                  Text(party.location, style: TextStyle(fontSize: 14)),
+                                  Flexible(
+                                    child: Text(
+                                      party.location,
+                                      style: TextStyle(fontSize: 14),
+                                      overflow: TextOverflow.ellipsis, // Ensures long text is truncated
+                                    ),
+                                  ),
                                 ],
                               ),
                               SizedBox(height: 10),
@@ -123,7 +136,14 @@ class _MyPartiesScreenState extends State<MyPartiesScreen> {
                                 children: [
                                   Icon(Icons.people, size: 16),
                                   SizedBox(width: 5),
-                                  Text('Attendees: $attendeeNames', style: TextStyle(fontSize: 14)),
+                                  Flexible(
+                                    child: Text(
+                                      'Attendees: $attendeeNames',
+                                      style: TextStyle(fontSize: 14),
+                                      maxLines: 1, // Restrict the text to one line
+                                      overflow: TextOverflow.ellipsis, // Truncate text if it's too long
+                                    ),
+                                  ),
                                 ],
                               ),
                             ],
@@ -132,6 +152,7 @@ class _MyPartiesScreenState extends State<MyPartiesScreen> {
                           onTap: () => showBottomSheetForParty(party),
                         ),
                       );
+
                     },
                   );
                 }
@@ -222,84 +243,89 @@ class _MyPartiesScreenState extends State<MyPartiesScreen> {
       ),
       builder: (BuildContext context) {
         final mediaQuery = MediaQuery.of(context);
-        final modalHeight = mediaQuery.size.height * 0.6;
+        final modalHeight = mediaQuery.size.height * 0.7;
         return SizedBox(
           height: modalHeight,
           child: Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Center(
-                  child: Text(
-                    party.name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 30,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                _buildDetailRow('Host: ', party.hostName),
-                _buildDetailRow(
-                    'Date:', DateFormat('yyyy-MM-dd').format(parsedDateTime)),
-                _buildDetailRow(
-                    'Time:', DateFormat('hh:mm a').format(parsedDateTime)),
-                _buildDetailRow('Location: ', party.location),
-                _buildDetailRow('Description: ', party.description),
-                FutureBuilder<Map<String, String>>(
-                  future: _usernamesFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(child: LoadingAnimationWidget.fallingDot(color: const Color(0xff2226BA), size: 50));
-                    } else if (snapshot.hasError) {
-                      return Text('Error: ${snapshot.error}');
-                    } else if (!snapshot.hasData) {
-                      return Text('Error loading usernames');
-                    } else {
-                      final usernames = snapshot.data!;
-                      final attendeeNames = party.attendees
-                          .map((userId) => usernames[userId] ?? 'Unknown')
-                          .join(', ');
-                      return _buildDetailRow('Total Attendees: ', attendeeNames);
-                    }
-                  },
-                ),
-                _buildDetailRow('Tags: ', party.tags.join(", ")),
-                const Spacer(),
-                Center(
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      // Wait for confirmation before proceeding
-                      bool confirmDelete = await _confirmJoinParty(party.name);
-                      if (confirmDelete) {
-                        // Perform deletion after confirmation
-                        await partyService.deleteParty(party.id);
-                        Navigator.pop(context);  // Close the modal
-                        setState(() {
-                          _myPartiesFuture = _loadMyParties();  // Reload parties
-                        });
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      padding: const EdgeInsets.symmetric(vertical: 15,horizontal: 35),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.0),
+            child: SingleChildScrollView( // Add this widget to allow scrolling
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Center(
+                    child: Text(
+                      party.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 30,
                       ),
                     ),
-                    child: const Text(
-                      'Delete',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 20),
+                  _buildDetailRow('Host: ', party.hostName),
+                  _buildDetailRow(
+                      'Date:', DateFormat('yyyy-MM-dd').format(parsedDateTime)),
+                  _buildDetailRow(
+                      'Time:', DateFormat('hh:mm a').format(parsedDateTime)),
+                  _buildDetailRow('Location: ', party.location),
+                  _buildDetailRow('Description: ', party.description),
+                  FutureBuilder<Map<String, String>>(
+                    future: _usernamesFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(
+                          child: LoadingAnimationWidget.fallingDot(
+                              color: const Color(0xff2226BA), size: 50),
+                        );
+                      } else if (snapshot.hasError) {
+                        return Text('Error: ${snapshot.error}');
+                      } else if (!snapshot.hasData) {
+                        return Text('Error loading usernames');
+                      } else {
+                        final usernames = snapshot.data!;
+                        final attendeeNames = party.attendees
+                            .map((userId) => usernames[userId] ?? 'Unknown')
+                            .join(', ');
+                        return _buildDetailRow('Total Attendees: ', attendeeNames);
+                      }
+                    },
+                  ),
+                  _buildDetailRow('Tags: ', party.tags.join(", ")),
+                  const SizedBox(height: 20),
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        // Wait for confirmation before proceeding
+                        bool confirmDelete = await _confirmJoinParty(party.name);
+                        if (confirmDelete) {
+                          // Perform deletion after confirmation
+                          await partyService.deleteParty(party.id);
+                          Navigator.pop(context);  // Close the modal
+                          setState(() {
+                            _myPartiesFuture = _loadMyParties();  // Reload parties
+                          });
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 35),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                      ),
+                      child: const Text(
+                        'Delete',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 20),
-              ],
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
           ),
         );
