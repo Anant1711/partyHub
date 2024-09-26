@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'package:clique/screens/GoogleMapsScreen.dart';
+import 'package:another_flushbar/flushbar.dart';
 import 'package:clique/services/NetworkUtitliy.dart';
-import 'package:clique/services/UserService.dart';
+import 'package:clique/utility/commonutility.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
@@ -10,10 +10,7 @@ import 'package:clique/services/party_service.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:uuid/uuid.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:clique/services/Location_permission_service.dart';
-
 import '../services/MultiSelectChip.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class CreatePartyScreen extends StatefulWidget {
   const CreatePartyScreen({super.key});
@@ -54,7 +51,6 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
   bool _isLoading = false; // Add loading flag
   NetworkUtitliy networkUtitliy = NetworkUtitliy();
   late String mCurrentLocation,mLocationLink;
-
   //////////////////////////////// -Variables- ////////////////////////////////
 
   @override
@@ -525,9 +521,9 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
                       child: SizedBox(
                         width: mediaQuery.size.width * 0.8, // Set button width
                         child: TextButton(
-                          onPressed: () {
+                          onPressed: () async{
                             print("User My Current Location button pressed");
-                            _getCurrentLocation();
+                            await _getCurrentLocation();
                             setModalState(() {
                               _locationController.text = mCurrentLocation;
                             });
@@ -581,6 +577,39 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
     );
   }
 
+  void _showTopFlushBarForEnableLocaiton(BuildContext context, String message) {
+    Flushbar(
+      messageColor: Colors.black,
+      message: message,
+      margin: EdgeInsets.all(10),
+      padding: EdgeInsets.all(20),
+      borderRadius: BorderRadius.circular(8),
+      icon: const Icon(
+        Icons.location_off_outlined,
+        size: 30.0,
+        color: Colors.red,
+      ),
+      flushbarPosition: FlushbarPosition.TOP, // Positioning at the top
+      duration: Duration(seconds: 10), // Display duration
+      backgroundColor: Colors.white,
+      isDismissible: true,
+      forwardAnimationCurve: Curves.easeInOut,
+      reverseAnimationCurve: Curves.easeOut,
+      // Adding a button to enable location services
+      mainButton: TextButton(
+        onPressed: () {
+          // Navigate to the device location settings
+          Geolocator.openLocationSettings();
+          // Optionally, dismiss the Flushbar
+          Navigator.of(context).pop();
+        },
+        child: Text(
+          'Enable',
+          style: TextStyle(color: Colors.blue),
+        ),
+      ),
+    ).show(context);
+  }
   void _placeAutoComplete(String query) async {
     Uri uri = Uri.https(
       "maps.googleapis.com",
@@ -626,6 +655,7 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       // Location services are not enabled, so request the user to enable them
+      commonutility().showTopFlushBarForEnableLocaiton(context,"Location is disabled, Please enable it");
       return Future.error('Location services are disabled.');
     }
 

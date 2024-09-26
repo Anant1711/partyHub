@@ -7,16 +7,21 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';  // Geolocator import
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import 'DependencyInjection.dart';
 import 'firebase_options.dart';
+
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Handle background messages
+  print("Handling a background message: ${message.messageId}");
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,7 +38,12 @@ void main() async {
       androidProvider: AndroidProvider.debug,
       appleProvider: AppleProvider.appAttest,
     );
-  } catch (e) {print("Error initializing Firebase: $e");}
+  } catch (e) {
+    print("Error initializing Firebase: $e");
+  }
+
+  // Handle background messages
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   runApp(PartyHubApp());
   DependencyInjection.init();
@@ -46,7 +56,6 @@ class PartyHubApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final NetworkController networkController = Get.put(NetworkController());
 
-    //Todo: To check Internet connectivity do: GetMaterialApp instead of MaterialApp.
     return GetMaterialApp(
       color: const Color(0xffDCDBE2),
       theme: _buildTheme(Brightness.light),
@@ -62,7 +71,7 @@ class PartyHubApp extends StatelessWidget {
               const FullScreenNoInternetCard(),
           ],
         );
-      }), // Use AuthenticationWrapper here
+      }),
       routes: {
         '/profile': (context) => ProfileScreen(),
         '/phoneAuth': (context) => PhoneAuthScreen(),
@@ -79,7 +88,50 @@ class PartyHubApp extends StatelessWidget {
   }
 }
 
-class AuthenticationWrapper extends StatelessWidget {
+class AuthenticationWrapper extends StatefulWidget {
+  @override
+  _AuthenticationWrapperState createState() => _AuthenticationWrapperState();
+}
+
+class _AuthenticationWrapperState extends State<AuthenticationWrapper> {
+  @override
+  void initState() {
+    super.initState();
+    _checkLocationPermission();
+  }
+
+  Future<void> _checkLocationPermission() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // Check if location services are enabled
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      await Geolocator.openLocationSettings();
+    }
+
+    // Check and request permission
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        // Permission denied, handle accordingly
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      // Permissions are permanently denied
+      return Future.error(
+          'Location permissions are permanently denied, cannot request.');
+    }
+
+    // Permission granted, proceed to get the location
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
+    print('Current location: ${position.latitude}, ${position.longitude}');
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
@@ -93,7 +145,6 @@ class AuthenticationWrapper extends StatelessWidget {
             ),
           );
         } else if (snapshot.hasData) {
-          // If the user is authenticated, check if the phone is verified
           return FutureBuilder<DocumentSnapshot>(
             future: FirebaseFirestore.instance
                 .collection('users')
@@ -111,20 +162,16 @@ class AuthenticationWrapper extends StatelessWidget {
                     userSnapshot.data!['isPhoneNumberVerified'] ?? false;
 
                 if (isPhoneVerified) {
-                  // Navigate to homepage if the phone is verified
                   return HomeScreen();
                 } else {
-                  // If phone is not verified, navigate to PhoneAuthScreen
                   return PhoneAuthScreen();
                 }
               }
 
-              // In case user document doesn't exist, navigate to AuthScreen
               return AuthScreen();
             },
           );
         } else {
-          // If user is not authenticated, show the AuthScreen
           return AuthScreen();
         }
       },
@@ -132,14 +179,13 @@ class AuthenticationWrapper extends StatelessWidget {
   }
 }
 
-// Create a full-screen widget for when there's no internet
 class FullScreenNoInternetCard extends StatelessWidget {
   const FullScreenNoInternetCard({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black.withOpacity(0.7), // Semi-transparent background
+      backgroundColor: Colors.black.withOpacity(0.7),
       body: const Center(
         child: Card(
           color: Colors.white,

@@ -24,7 +24,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreen extends State<ProfileScreen> {
   UserService userService = UserService();
-  final commonUtility = CommonUtility();
+  //final commonUtility = CommonUtility();
   late Future<List<String?>> _userInfoFuture;
   final _storage = FirebaseStorage.instance;
 

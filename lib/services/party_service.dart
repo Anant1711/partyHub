@@ -242,4 +242,22 @@ class PartyService {
     }
   }
 
+  //Get party by ID
+  Future<JoinRequest?> getRequestById(String requestId) async {
+    QuerySnapshot snapshot = await _firestore.collection(REQUEST_COLLECTION)
+        .where('requestId', isEqualTo: requestId)
+        .get();
+
+    if (snapshot.docs.isNotEmpty) {
+      // Get the first document from the query snapshot
+      DocumentSnapshot documentSnapshot = snapshot.docs.first;
+
+      // Convert the document snapshot into a Party object
+      return JoinRequest.fromDocument(documentSnapshot);
+    } else {
+      // Return null if no documents were found
+      return null;
+    }
+  }
+
 }

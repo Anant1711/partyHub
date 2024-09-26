@@ -131,8 +131,9 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
                             final partyID = request[
                             'partyId']; // Ensure the ID is fetched correctly
                             final hostUserName = userNames[hostId] ?? 'Unknown User';
-                            final UserId = request['userId'] ?? 'Unknown User';
-                            final requestID = request['requestId'] ?? 'Unknown User';
+                            final UserId = request['userId'] ?? 'Unknown UserId';
+                            final requestID = request['requestId'] ?? 'Unknown requestID';
+                            final message = request['message'] ?? '';
                             //Party? party = partyService.getPartyByID(partyID);
                             final specificPartyName = partyName[partyID] ?? 'Fetching Party Name..';
 
@@ -142,7 +143,7 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
                                   17.0, 8.0, 17.0, 8.0),
                               child: ListTile(
                                 onTap: () {
-                                  fetchAndShowParty(UserId,requestID,partyID, status);
+                                  fetchAndShowParty(UserId,requestID,partyID, status,message);
                                   print("printing request iD: $requestID");
                                 },
                                 title: Text(
@@ -189,7 +190,7 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
     partyService.deleteRequest(requestId);
   }
 
-  void showBottomSheetForParty(String userId, String requestId, Party party, String status, DateTime parsedDateTime) {
+  void showBottomSheetForParty(String userId, String requestId, Party party, String status, DateTime parsedDateTime,String message) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -225,7 +226,8 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
                 _buildDetailRow('Description: ', party.description),
                 _buildDetailRow("Attendees: ", party.attendees.join(", ")),
                 _buildDetailRow('Tags: ', party.tags.join(", ")),
-                _buildDetailRow('Status', status),
+                _buildDetailRow('Status:', status),
+                _buildDetailRow('Your message:', message),
                 const SizedBox(height: 50),
                 Center(
                   child: ElevatedButton(
@@ -260,14 +262,14 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
   }
 
   // This function should be async
-  Future<void> fetchAndShowParty(String userId,String requestID,String partyID, String status) async {
+  Future<void> fetchAndShowParty(String userId,String requestID,String partyID, String status,String message) async {
     try {
       // Await the result of the asynchronous method
       Party? party = await partyService.getPartyByID(partyID);
       DateTime parsedDateTime = DateTime.parse(party!.dateTime);
       // Pass the Party object to your bottom sheet function
       print("printing request iD: $requestID");
-      showBottomSheetForParty(userId,requestID,party, status, parsedDateTime);
+      showBottomSheetForParty(userId,requestID,party, status, parsedDateTime,message);
     } catch (e) {
       // Handle any errors that occur during the fetch
       print('Error fetching party: $e');

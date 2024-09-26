@@ -2,14 +2,17 @@
 - [ ] Add camera/selfie for verification
 - [ ] Show ack pop-up after request sent to Host.
 - [ ] Add Ratings/Reviews for Users/Hosts
-- [ ] Bottom Sheet for Manage Join Request
-- [ ] User can send message/Query to host during sending request.
+- [X] Ask Location permission in Starting of application.
+- [ ] User can set location and then app should show nearby parties (by Haversine formula or any other Distance cal formula). **[High Priority]** **[Important]**
+- [ ] Create a Shimmer effect in join_party_scree for loading parties.
+- [ ] Add functionality to Delete account.
+- [ ] Implement Notifications for Accepting/Rejecting Requests.
+- [ ] Make UI more attractive **[Least Priority]**
+- [X] Bottom Sheet for Manage Join Request
+- [X] Authentication part:- Gmail + Phone Auth **[High Priority]**
 - [X] User can add Real Location while creating Parties. **[High Priority]** **[Important]**
 - [X] User can add Current Location and Location Link while creating Parties. **[High Priority]** **[Important]**
-- [ ] User can set location and then app should show nearby parties. **[High Priority]** **[Important]**
-- [X] Authentication part:- Gmail + Phone Auth **[High Priority]**
-- [ ] Create a Shimmer effect in join_party_scree for loading parties.
-- [ ] Make UI more attractive **[Least Priority]**
+- [X] User can send message/Query to host during sending request.
 - [X] Add Party Delete option for Host.
 - [X] Fix update PhoneNumber in firebase issue.
 - [X] Check Internet connectivity - Globally

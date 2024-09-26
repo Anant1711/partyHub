@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class JoinRequest {
   final String userId;
   final String userName;
@@ -6,6 +8,7 @@ class JoinRequest {
   final String partyId;
   final DateTime timestamp;
   final String requestId;
+  final String message;
 
   JoinRequest({
     required this.requestId,
@@ -15,6 +18,7 @@ class JoinRequest {
     required this.status,
     required this.partyId,
     required this.timestamp,
+    required this.message,
   });
 
   // Convert JoinRequest object to Map for storing in the database
@@ -27,6 +31,7 @@ class JoinRequest {
       'status': status,
       'partyId': partyId,
       'timestamp': timestamp.toIso8601String(),
+      'message':message,
     };
   }
 
@@ -40,6 +45,21 @@ class JoinRequest {
       status: map['status'],
       partyId: map['partyId'],
       timestamp: DateTime.parse(map['timestamp']),
+      message: map['message'],
+    );
+  }
+
+  factory JoinRequest.fromDocument(DocumentSnapshot doc) {
+    final map = doc.data() as Map<String, dynamic>;
+    return JoinRequest(
+      requestId: map['requestId'],
+      userId: map['userId'],
+      userName: map['userName'],
+      hostId: map['hostId'],
+      status: map['status'],
+      partyId: map['partyId'],
+      timestamp: DateTime.parse(map['timestamp']),
+      message: map['message'],
     );
   }
 }

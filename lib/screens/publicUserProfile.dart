@@ -11,6 +11,7 @@ import '../services/party_service.dart';
 class publicUserProfile extends StatefulWidget {
   late String userId;
   publicUserProfile({super.key, required String userId}) {
+    print(userId);
     this.userId = userId;
   }
 
@@ -117,7 +118,7 @@ class _PublicuserprofileState extends State<publicUserProfile> {
             );
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          } else if (!snapshot.hasData) {
             return Center(child: Text('No Profile'));
           } else {
             final parties = snapshot.data!;

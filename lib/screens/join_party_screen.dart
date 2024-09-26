@@ -20,7 +20,6 @@ class JoinPartyScreen extends StatefulWidget {
 
 class _JoinPartyScreenState extends State<JoinPartyScreen> {
   //////////////////////////////// -Variables- ////////////////////////////////
-  CommonUtility commonUtility = CommonUtility();
   late Future<List<Party>> _partiesFuture;
   late Future<Map<String, String>> _usernamesFuture;
   late var mUserId;
@@ -52,16 +51,20 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
         .map((userId) => usernames[userId] ?? 'Unknown')
         .join(', ');
 
+    // Create a controller for the message input
+    final TextEditingController messageController = TextEditingController();
+
     final confirmation = await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           backgroundColor: Colors.white,
           title: Center(
-              child: Text(
-            'Join ${party.name}?',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          )),
+            child: Text(
+              'Join ${party.name}?',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
           content: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -73,7 +76,7 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
                     'Date:', DateFormat('dd-MM-yyyy').format(parsedDateTime)),
                 _buildDetailRow(
                     'Time:', DateFormat('hh:mm a').format(parsedDateTime)),
-                _buildDetailRow("Description", party.description),
+                _buildDetailRow("Description:", party.description),
                 _buildDetailRow(
                   "Attendees Name:",
                   attendeesNames.isNotEmpty
@@ -81,6 +84,32 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
                       : 'No attendees yet',
                 ),
                 _buildDetailRow('Your name:', userName),
+                const SizedBox(height: 10), // Add some spacing
+                const Text(
+                  'Message to Host:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                TextField(
+                  controller: messageController,
+                  decoration: InputDecoration(
+                    labelStyle: TextStyle(
+                        color: Colors.grey[700], fontWeight: FontWeight.bold),
+                    hintText: 'Type your query/message here (optional) ...',
+                    hintStyle: TextStyle(color: Colors.grey[500]),
+                    filled: true,
+                    fillColor: Colors.grey[200],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide:
+                          BorderSide(color: Colors.blueAccent, width: 2),
+                    ),
+                  ),
+                  maxLines: 3, // Allow multiple lines
+                ),
               ],
             ),
           ),
@@ -91,8 +120,11 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xff4C46EB)),
-              onPressed: () => Navigator.of(context).pop(true),
+                backgroundColor: const Color(0xff4C46EB),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
               child: const Text(
                 'Confirm',
                 style: TextStyle(color: Colors.white),
@@ -104,11 +136,16 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
     );
 
     if (confirmation == true) {
-      _joinParty(party, userName, userId);
+      String? message = messageController.text.isNotEmpty
+          ? messageController.text
+          : ''; // Optional message
+      _joinParty(party, userName, userId,
+          message); // Pass the message to the join method
     }
   }
 
-  Future<void> _joinParty(Party party, String userName, String userId) async {
+  Future<void> _joinParty(
+      Party party, String userName, String userId, String message) async {
     final partyService = PartyService();
     final joinRequest = JoinRequest(
       requestId: uid.v4(),
@@ -118,6 +155,7 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
       status: 'Pending', // Initially, it's pending
       partyId: party.id,
       timestamp: DateTime.now(),
+      message: message,
     );
     print(joinRequest);
 
@@ -189,10 +227,11 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
       builder: (BuildContext context) {
         String partyStatus = _getPartyStatus(party); // Get the party status
         final mediaQuery = MediaQuery.of(context);
-        final modalHeight = mediaQuery.size.height * 0.6;
+        final modalHeight = mediaQuery.size.height * 0.7;
 
         return FutureBuilder<List<String>>(
-          future: _getAttendeeUsernames(party.attendees), // Fetch usernames for attendees
+          future: _getAttendeeUsernames(
+              party.attendees), // Fetch usernames for attendees
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return Center(
@@ -210,7 +249,8 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
 
               return SizedBox(
                 height: modalHeight,
-                child: SingleChildScrollView( // Added this for scrollable content
+                child: SingleChildScrollView(
+                  // Added this for scrollable content
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
@@ -230,23 +270,25 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
                         _buildDetailRowWithButton("Host: ", party),
                         _buildDetailRow("Date: ", date),
                         _buildDetailRow("Time: ", time),
-                        _buildDetailRow('Location: ', party.location),
-                        _buildDetailRowWithLocationButton("Locate me on Maps", party),
+                        _buildDetailRowForLoc('Location', party.location, (){_openGoogleMapsLink(party.locationLink);}),
                         _buildDetailRow('Description: ', party.description),
 
                         // Only show attendees row if there are attendees
                         if (attendeeUsernames.isNotEmpty)
-                          _buildDetailRow("Attendees: ", attendeeUsernames.join(", ")),
+                          _buildDetailRow(
+                              "Attendees: ", attendeeUsernames.join(", ")),
                         if (attendeeUsernames.isEmpty)
                           _buildDetailRow("Attendees: ", "No Attendees yet!"),
 
                         _buildDetailRow('Tags: ', party.tags.join(", ")),
-                        const SizedBox(height: 20), // Add padding above the button
+                        const SizedBox(
+                            height: 40), // Add padding above the button
 
                         // Conditional content based on party status
                         Center(
                           child: SizedBox(
-                            width: mediaQuery.size.width * 0.8, // Set button width
+                            width:
+                                mediaQuery.size.width * 0.8, // Set button width
                             child: _buildStatusWidget(
                               partyStatus,
                               party,
@@ -287,6 +329,7 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
         title: const Text('Join a Party',
             style: TextStyle(fontWeight: FontWeight.bold)),
       ),
+
       body: FutureBuilder<List<Party>>(
         future: _partiesFuture,
         builder: (context, snapshot) {
@@ -352,7 +395,6 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
                                 DateFormat('dd-MM-yyyy').format(parsedDateTime);
                             String time =
                                 DateFormat('hh:mm a').format(parsedDateTime);
-
                             return Card(
                               color: Colors.grey[100],
                               margin: const EdgeInsets.fromLTRB(
@@ -450,20 +492,64 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
           Expanded(
             child: Text(
               label,
-              style: TextStyle(fontWeight: FontWeight.bold,fontSize: 17),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
             ),
           ),
           Expanded(
             child: Text(
               value,
               style: TextStyle(
-                fontSize: 17,),
+                fontSize: 17,
+              ),
             ),
           ),
         ],
       ),
     );
   }
+
+  Widget _buildDetailRowForLoc(String label, String value, VoidCallback onIconPressed) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Expanded widget for the label to ensure it takes appropriate space
+          Expanded(
+            flex: 4,
+            child: Text(
+              label,
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+            ),
+          ),
+          // Expanded widget for value text that wraps into multiple lines
+          Expanded(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 17,
+                  ),
+                  softWrap: true, // Allow text to wrap
+                  maxLines: null, // No limit on the number of lines
+                ),
+              ],
+            ),
+          ),
+          // Icon button placed on the right side
+          IconButton(
+            style:ButtonStyle( backgroundColor: MaterialStatePropertyAll<Color>(Colors.grey[200]!),iconColor: MaterialStatePropertyAll<Color>(Color(0xff2226BA))),
+            icon: const Icon(Icons.location_on_outlined),
+            onPressed: onIconPressed,
+          ),
+        ],
+      ),
+    );
+  }
+
   // Method to determine what widget to show based on partyStatus
   Widget _buildStatusWidget(String partyStatus, Party party, BuildContext context, DateTime parsedDateTime) {
     // Define a common style for all buttons
@@ -530,7 +616,7 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
         child: ElevatedButton(
           onPressed: () async {
             String? userName =
-            await _getUserName(); // Get username for confirmation
+                await _getUserName(); // Get username for confirmation
             if (mUserId != null && userName != null) {
               _confirmJoinParty(party, userName, mUserId,
                   parsedDateTime); // Confirm joining party
@@ -555,17 +641,19 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
       );
     }
   }
+
   Widget _buildDetailRowWithButton(String label, Party party) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center, // Aligns widgets vertically in the center
+        crossAxisAlignment: CrossAxisAlignment
+            .center, // Aligns widgets vertically in the center
         children: [
           SizedBox(
             width: 100, // Fixed width to ensure alignment
             child: Text(
               label,
-              style: const TextStyle(fontWeight: FontWeight.bold,fontSize: 17),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
               overflow: TextOverflow.ellipsis, // Handles text overflow
             ),
           ),
@@ -586,42 +674,6 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
               ),
               child: Text(
                 "${party.hostName}",
-                style: const TextStyle(
-                  fontSize: 17,
-                  color: Colors.blue, // Adjust as needed
-                  fontWeight: FontWeight.normal,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  Widget _buildDetailRowWithLocationButton(String label, Party party) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center, // Aligns widgets vertically in the center
-        children: [
-          SizedBox(
-            width: 100, // Fixed width to ensure alignment
-            child: Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.bold,fontSize: 17),
-              overflow: TextOverflow.ellipsis, // Handles text overflow
-            ),
-          ),
-          Expanded(
-            child: TextButton(
-              onPressed: () {
-                _openGoogleMapsLink(party.locationLink);
-              },
-              style: TextButton.styleFrom(
-                padding: EdgeInsets.zero, // Remove extra padding
-              ),
-              child: const Text(
-                "Locate me",
                 style: const TextStyle(
                   fontSize: 17,
                   color: Colors.blue, // Adjust as needed
