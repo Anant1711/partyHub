@@ -94,6 +94,10 @@ class AuthenticationWrapper extends StatefulWidget {
 }
 
 class _AuthenticationWrapperState extends State<AuthenticationWrapper> {
+  var mLatitude = 0.0;
+  var mLongitude = 0.0;
+
+
   @override
   void initState() {
     super.initState();
@@ -129,6 +133,8 @@ class _AuthenticationWrapperState extends State<AuthenticationWrapper> {
     // Permission granted, proceed to get the location
     Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high);
+    mLatitude = position.latitude;
+    mLongitude = position.longitude;
     print('Current location: ${position.latitude}, ${position.longitude}');
   }
 
@@ -160,9 +166,15 @@ class _AuthenticationWrapperState extends State<AuthenticationWrapper> {
               if (userSnapshot.hasData && userSnapshot.data!.exists) {
                 bool isPhoneVerified =
                     userSnapshot.data!['isPhoneNumberVerified'] ?? false;
-
                 if (isPhoneVerified) {
-                  return HomeScreen();
+                    FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(snapshot.data!.uid)
+                      .update({
+                    'CurrentLat':mLatitude,
+                      'CurrentLong':mLongitude
+                  });
+                  return HomeScreen.withOptions(mLatitude,mLongitude,userSnapshot.data!['userID']);
                 } else {
                   return PhoneAuthScreen();
                 }

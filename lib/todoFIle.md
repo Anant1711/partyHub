@@ -1,7 +1,8 @@
 # Todo
 - [ ] Add camera/selfie for verification
 - [ ] Show ack pop-up after request sent to Host.
-- [ ] Add Ratings/Reviews for Users/Hosts
+- [ ] Add Ratings/Reviews for Users/Hosts\
+- [ ] Add long, lat from Phone Auth side also.
 - [X] Ask Location permission in Starting of application.
 - [ ] User can set location and then app should show nearby parties (by Haversine formula or any other Distance cal formula). **[High Priority]** **[Important]**
 - [ ] Create a Shimmer effect in join_party_scree for loading parties.

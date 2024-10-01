@@ -1,3 +1,4 @@
+import 'package:clique/models/UserModel.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -56,14 +57,22 @@ class UserService {
         return currentUser.uid;
     }
     return null;
+  }
 
+  //Get party by ID
+  Future<UserModel?> getUserByIDFromFirebase(String partyID) async {
+    QuerySnapshot snapshot = await _firestore.collection('users')
+        .where('userID', isEqualTo: partyID)
+        .get();
 
-    try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? userId = prefs.getString('userId');
-      return userId;
-    } catch (e) {
-      print("Error retrieving username: $e");
+    if (snapshot.docs.isNotEmpty) {
+      // Get the first document from the query snapshot
+      DocumentSnapshot documentSnapshot = snapshot.docs.first;
+
+      // Convert the document snapshot into a Party object
+      return UserModel.fromDocument(documentSnapshot);
+    } else {
+      // Return null if no documents were found
       return null;
     }
   }

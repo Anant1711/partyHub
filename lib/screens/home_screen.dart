@@ -1,35 +1,57 @@
 import 'dart:convert';
-
+import 'package:clique/services/UserService.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:clique/screens/profileScreen.dart';
 import 'package:clique/screens/create_party_screen.dart';
 import 'package:clique/screens/join_party_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
-
+import '../models/UserModel.dart';
 import '../services/NetworkUtitliy.dart';
 import '../utility/commonutility.dart';
 
 class HomeScreen extends StatefulWidget {
+  late var lat,long;
+  late String mUid;
   @override
   _HomeScreenState createState() => _HomeScreenState();
+  HomeScreen();
+  HomeScreen.withOptions(var this.lat, var this.long, String this.mUid);
 }
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0; // Track selected tab
-  late String mCurrentLocation,mLocationLink;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  late String mCurrentLocation, mLocationLink;
   late var _locationController = TextEditingController();
   List<String> _suggestions = [];
   List<String> _placeId = [];
+  UserModel userModel = UserModel();
   final String GoogleMapsAPIKey = "AIzaSyALYSRtamiN-lmyfFxS5VipSyWsBANLOMc";
-  ValueNotifier<String> _welcomeMessageNotifier = ValueNotifier<String>("Welcome to Party App!"); // Example notifier
-  String _currentLocation = "Set Location"; // Placeholder for the current location
+  ValueNotifier<String> _welcomeMessageNotifier =
+      ValueNotifier<String>("Welcome to Party App!"); // Example notifier
+  String _currentLocation =
+      "Set Location"; // Placeholder for the current location
 
   @override
   void initState() {
+    print("in init");
     super.initState();
     // Add a listener to the notifier
     _welcomeMessageNotifier.addListener(_onWelcomeMessageChange);
+    if(widget.long == 0.0 && widget.lat == 0.0){
+      fetchUserInfo();
+      _reverseGeocode(userModel.currentLat,userModel.currentLong);
+    }else{
+      _reverseGeocode(widget.lat,widget.long);
+    }
+  }
+
+  Future<void> fetchUserInfo() async {
+    print("Fetching from Firebase");
+    userModel = (await UserService().getUserByIDFromFirebase(widget.mUid))!;
   }
 
   @override
@@ -110,8 +132,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide:
-                              BorderSide(color: Colors.blueAccent, width: 2),
+                              borderSide: BorderSide(
+                                  color: Colors.blueAccent, width: 2),
                             ),
                           ),
                           onChanged: (value) {
@@ -129,7 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: SizedBox(
                         width: mediaQuery.size.width * 0.8, // Set button width
                         child: TextButton(
-                          onPressed: () async{
+                          onPressed: () async {
                             print("User My Current Location button pressed");
                             await _getCurrentLocation();
                             setModalState(() {
@@ -158,7 +180,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         itemCount: _suggestions.length,
                         itemBuilder: (context, index) {
                           return ListTile(
-                            title: Text(_suggestions[index],style: TextStyle(fontWeight: FontWeight.bold),),
+                            title: Text(
+                              _suggestions[index],
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
                             onTap: () {
                               // Handle selection here
                               setModalState(() {
@@ -206,7 +231,7 @@ class _HomeScreenState extends State<HomeScreen> {
         List<String> placeId = [];
         List<String> suggestions = [];
 
-        for(var prediction in predictions){
+        for (var prediction in predictions) {
           suggestions.add(prediction['description'].toString());
           placeId.add(prediction['place_id'].toString());
         }
@@ -230,7 +255,8 @@ class _HomeScreenState extends State<HomeScreen> {
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       // Location services are not enabled, so request the user to enable them
-      commonutility().showTopFlushBarForEnableLocaiton(context,"Location is disabled, Please enable it");
+      commonutility().showTopFlushBarForEnableLocaiton(
+          context, "Location is disabled, Please enable it");
       return Future.error('Location services are disabled.');
     }
 
@@ -256,6 +282,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // Use the current coordinates (latitude, longitude) to fetch the location address
     print("lat: ${position.latitude} long: ${position.longitude}");
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(userModel.userID)
+        .update({
+      'CurrentLat':position.latitude,
+      'CurrentLong':position.longitude
+    });
     _reverseGeocode(position.latitude, position.longitude);
     generateGoogleMapsLink(position.latitude, position.longitude);
   }
@@ -280,13 +313,15 @@ class _HomeScreenState extends State<HomeScreen> {
         currentLocation = json['results'][0]['formatted_address'];
         print("Current Location: $currentLocation");
         mCurrentLocation = currentLocation;
+        _currentLocation = currentLocation;
 
         setState(() {
           _suggestions.insert(0, currentLocation);
         });
       } else {
         print('Error fetching location: ${json['status']}');
-        print('Error details: ${json['error_message']}'); // Log detailed error message
+        print(
+            'Error details: ${json['error_message']}'); // Log detailed error message
       }
     }
   }
@@ -313,7 +348,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
         generateGoogleMapsLink(latitude, longitude);
         print("Lat: $latitude, Lng: $longitude");
-
       } else {
         print('Error fetching place details: ${json['status']}');
       }
@@ -346,7 +380,8 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         // Main content of the screen
         Padding(
-          padding: const EdgeInsets.fromLTRB(50.0, 100.0, 50.0, 50.0), // Adjust padding for the rest of the content
+          padding: const EdgeInsets.fromLTRB(50.0, 100.0, 50.0,
+              50.0), // Adjust padding for the rest of the content
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -356,7 +391,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   return Text(
                     welcomeMessage,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 28),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600, fontSize: 28),
                   );
                 },
               ),
@@ -376,11 +412,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => CreatePartyScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => CreatePartyScreen()),
                   );
                 },
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xff4C46EB)),
-                child: const Text('Create a Party', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xff4C46EB)),
+                child: const Text('Create a Party',
+                    style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold)),
               ),
               Card(
                 margin: const EdgeInsets.symmetric(vertical: 8.0),
@@ -401,24 +441,22 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         // Text Button for setting location at the top-left corner
 
-
-    Positioned(
-    top: 45, // Adjust this value to move the button down as needed
-    left: 15, // Slight padding from the left edge
-    child: TextButton(
-    onPressed: () {
-    _showLocationBottomSheet(context);
-    },
-    child: Text(
-    truncateText(_currentLocation, 3), // Truncate to 3 words
-    style: TextStyle(color: Colors.blue),
-    overflow: TextOverflow.ellipsis, // Handle overflow
-    softWrap: true, // Allow wrapping if needed
-    ),
-    ),
-    ),
-
-    ],
+        Positioned(
+          top: 45, // Adjust this value to move the button down as needed
+          left: 15, // Slight padding from the left edge
+          child: TextButton(
+            onPressed: () {
+              _showLocationBottomSheet(context);
+            },
+            child: Text(
+              truncateText(_currentLocation, 3), // Truncate to 3 words
+              style: TextStyle(color: Colors.blue),
+              overflow: TextOverflow.ellipsis, // Handle overflow
+              softWrap: true, // Allow wrapping if needed
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -426,7 +464,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xffffffff),
-      body: _getSelectedScreen(), // Show selected screen based on bottom bar selection
+      body:
+          _getSelectedScreen(), // Show selected screen based on bottom bar selection
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: const Color(0xffffffff),
         items: const <BottomNavigationBarItem>[
@@ -446,18 +485,20 @@ class _HomeScreenState extends State<HomeScreen> {
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.black,
         unselectedItemColor: Colors.grey,
-        selectedIconTheme: IconThemeData(color: Colors.black, applyTextScaling: true),
+        selectedIconTheme:
+            IconThemeData(color: Colors.black, applyTextScaling: true),
         onTap: _onItemTapped, // Handle item tap
       ),
     );
   }
 
-String truncateText(String text, int maxWords) {
-List<String> words = text.split(' ');
-if (words.length <= maxWords) {
-return text; // Return original text if it meets the word count
-} else {
-return words.take(maxWords).join(' ') + '...'; // Truncate and add ellipsis
-}
-}
+  String truncateText(String text, int maxWords) {
+    List<String> words = text.split(' ');
+    if (words.length <= maxWords) {
+      return text; // Return original text if it meets the word count
+    } else {
+      return words.take(maxWords).join(' ') +
+          '...'; // Truncate and add ellipsis
+    }
+  }
 }

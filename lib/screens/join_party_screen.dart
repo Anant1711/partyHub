@@ -12,7 +12,11 @@ import '../services/UserService.dart';
 import '../utility/commonutility.dart';
 
 class JoinPartyScreen extends StatefulWidget {
-  const JoinPartyScreen({super.key});
+  double userLat = 0.0;
+  double userLong = 0.0;
+
+  JoinPartyScreen({super.key});
+  JoinPartyScreen.withLatLong(double this.userLat, double this.userLong);
 
   @override
   _JoinPartyScreenState createState() => _JoinPartyScreenState();
@@ -27,6 +31,7 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
   PartyService partyservice = new PartyService();
   late bool hasPendingRequest;
   Uuid uid = Uuid();
+  final double radiusKm = 50.0; // 50 Kilometers
   //////////////////////////////// -Variables- ////////////////////////////////
 
   @override
@@ -43,7 +48,8 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
     return parties.where((party) => party.hostID != userId).toList();
   }
 
-  Future<void> _confirmJoinParty(Party party, String userName, String userId, DateTime parsedDateTime) async {
+  Future<void> _confirmJoinParty(Party party, String userName, String userId,
+      DateTime parsedDateTime) async {
     // Fetch all usernames for the attendees
     final usernames = await UserService().getAllUsernames(party.attendees);
 
@@ -123,7 +129,10 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
                 backgroundColor: const Color(0xff4C46EB),
               ),
               onPressed: () {
-                Navigator.of(context).pop(true);
+                if (mounted) {
+                  Navigator.of(context)
+                      .pop(true); // Confirm and close the dialog
+                }
               },
               child: const Text(
                 'Confirm',
@@ -270,7 +279,9 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
                         _buildDetailRowWithButton("Host: ", party),
                         _buildDetailRow("Date: ", date),
                         _buildDetailRow("Time: ", time),
-                        _buildDetailRowForLoc('Location', party.location, (){_openGoogleMapsLink(party.locationLink);}),
+                        _buildDetailRowForLoc('Location', party.location, () {
+                          _openGoogleMapsLink(party.locationLink);
+                        }),
                         _buildDetailRow('Description: ', party.description),
 
                         // Only show attendees row if there are attendees
@@ -329,7 +340,6 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
         title: const Text('Join a Party',
             style: TextStyle(fontWeight: FontWeight.bold)),
       ),
-
       body: FutureBuilder<List<Party>>(
         future: _partiesFuture,
         builder: (context, snapshot) {
@@ -344,137 +354,153 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
           } else {
             final parties = snapshot.data!;
 
+            // Filter parties based on the calculated distance
+            final nearbyParties = parties.where((party) {
+              double distance = commonutility().calculateDistance(
+                  widget.userLat, widget.userLong, extractLatitude(party.locationLink), extractLongitutde(party.locationLink));
+              return distance <=
+                  radiusKm; // Only include parties within the radius
+            }).toList();
+
+            if (nearbyParties.isEmpty) {
+              return const Center(child: Text('No nearby parties available'));
+            }
+
             // Get all user IDs from attendees list
-            final userIds =
-                parties.expand((party) => party.attendees).toSet().toList();
+            final userIds = nearbyParties
+                .expand((party) => party.attendees)
+                .toSet()
+                .toList();
             _usernamesFuture = UserService().getAllUsernames(userIds);
 
             return ListView.builder(
-              itemCount: parties.length,
+              itemCount: nearbyParties.length,
               itemBuilder: (context, index) {
-                final party = parties[index];
+                final party = nearbyParties[index];
                 final availableSeats =
                     party.maxAttendees - party.attendees.length;
 
                 return FutureBuilder<String?>(
-                  future: _getUserId(),
-                  builder: (context, userSnapshot) {
-                    if (userSnapshot.connectionState ==
-                        ConnectionState.waiting) {
-                      return Center(
-                          child: LoadingAnimationWidget.fallingDot(
-                              color: Color(0xff2226BA), size: 50));
-                    } else if (userSnapshot.hasError) {
-                      return Center(
-                          child: Text('Error: ${userSnapshot.error}'));
-                    } else {
-                      mUserId = userSnapshot.data;
-                      print("JPS: $mUserId"); // Extract userId
+                    future: _getUserId(),
+                    builder: (context, userSnapshot) {
+                      if (userSnapshot.connectionState ==
+                          ConnectionState.waiting) {
+                        return Center(
+                            child: LoadingAnimationWidget.fallingDot(
+                                color: Color(0xff2226BA), size: 50));
+                      } else if (userSnapshot.hasError) {
+                        return Center(
+                            child: Text('Error: ${userSnapshot.error}'));
+                      } else {
+                        mUserId = userSnapshot.data;
+                        print("JPS: $mUserId"); // Extract userId
 
-                      return FutureBuilder<List<Map<String, dynamic>>>(
-                        future: mUserId != null
-                            ? partyservice.getPendingRequests(mUserId)
-                            : Future.value([]),
-                        builder: (context, requestSnapshot) {
-                          if (requestSnapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return Center(
-                                child: LoadingAnimationWidget.fallingDot(
-                                    color: Color(0xff2226BA), size: 50));
-                          } else if (requestSnapshot.hasError) {
-                            return Center(
-                                child: Text('Error: ${requestSnapshot.error}'));
-                          } else {
-                            final requests = requestSnapshot.data ?? [];
-                            print("JSP: $requests");
-                            hasPendingRequest = requests.any(
-                                (request) => request['partyId'] == party.id);
-                            DateTime parsedDateTime =
-                                DateTime.parse(party.dateTime);
-                            String date =
-                                DateFormat('dd-MM-yyyy').format(parsedDateTime);
-                            String time =
-                                DateFormat('hh:mm a').format(parsedDateTime);
-                            return Card(
-                              color: Colors.grey[100],
-                              margin: const EdgeInsets.fromLTRB(
-                                  17.0, 8.0, 17.0, 8.0),
-                              child: ListTile(
-                                onTap: () {
-                                  _showPartyDetailsBottomSheet(
-                                      context, party); // Show bottom sheet
-                                },
-                                title: Text(party.name,
-                                    style: const TextStyle(
-                                        color: Color(0xff2226BA),
-                                        fontWeight: FontWeight.bold)),
-                                subtitle: Text(
-                                    '$date,\n$time \n${party.location}\nAvailable Seats: $availableSeats'
-                                    '${party.tags.isNotEmpty ? '\n\nTags: ${party.tags.join(", ")}' : ''}'),
-                                trailing: availableSeats > 0
-                                    ? hasPendingRequest
-                                        ? const Text(
-                                            'Pending',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.orange,
-                                                fontSize: 18),
-                                          )
-                                        : party.attendees.contains(mUserId)
-                                            ? const Text(
-                                                'Joined',
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.green,
-                                                    fontSize: 18),
-                                              )
-                                            : ElevatedButton(
-                                                onPressed: () async {
-                                                  String? userName =
-                                                      await _getUserName(); // Get username for the confirmation
-                                                  if (mUserId != null &&
-                                                      userName != null) {
-                                                    _confirmJoinParty(
-                                                        party,
-                                                        userName,
-                                                        mUserId,
-                                                        parsedDateTime); // Confirm joining party
-                                                  } else {
-                                                    ScaffoldMessenger.of(
-                                                            context)
-                                                        .showSnackBar(
-                                                      const SnackBar(
-                                                        content: Text(
-                                                            'User not logged in. Please log in again.'),
-                                                      ),
-                                                    );
-                                                  }
-                                                },
-                                                style: ElevatedButton.styleFrom(
-                                                    backgroundColor:
-                                                        const Color(
-                                                            0xff2226BA)),
-                                                child: const Text(
-                                                  'Join',
+                        return FutureBuilder<List<Map<String, dynamic>>>(
+                          future: mUserId != null
+                              ? partyservice.getPendingRequests(mUserId)
+                              : Future.value([]),
+                          builder: (context, requestSnapshot) {
+                            if (requestSnapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return Center(
+                                  child: LoadingAnimationWidget.fallingDot(
+                                      color: Color(0xff2226BA), size: 50));
+                            } else if (requestSnapshot.hasError) {
+                              return Center(
+                                  child:
+                                      Text('Error: ${requestSnapshot.error}'));
+                            } else {
+                              final requests = requestSnapshot.data ?? [];
+                              print("JSP: $requests");
+                              hasPendingRequest = requests.any(
+                                  (request) => request['partyId'] == party.id);
+
+                              DateTime parsedDateTime =
+                                  DateTime.parse(party.dateTime);
+                              String date = DateFormat('dd-MM-yyyy')
+                                  .format(parsedDateTime);
+                              String time =
+                                  DateFormat('hh:mm a').format(parsedDateTime);
+
+                              return Card(
+                                color: Colors.grey[100],
+                                margin: const EdgeInsets.fromLTRB(
+                                    17.0, 8.0, 17.0, 8.0),
+                                child: ListTile(
+                                  onTap: () {
+                                    _showPartyDetailsBottomSheet(
+                                        context, party); // Show bottom sheet
+                                  },
+                                  title: Text(party.name,
+                                      style: const TextStyle(
+                                          color: Color(0xff2226BA),
+                                          fontWeight: FontWeight.bold)),
+                                  subtitle: Text(
+                                      '$date,\n$time \n${party.location}\nAvailable Seats: $availableSeats'
+                                      '${party.tags.isNotEmpty ? '\n\nTags: ${party.tags.join(", ")}' : ''}'),
+                                  trailing: availableSeats > 0
+                                      ? hasPendingRequest
+                                          ? const Text(
+                                              'Pending',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.orange,
+                                                  fontSize: 18),
+                                            )
+                                          : party.attendees.contains(mUserId)
+                                              ? const Text(
+                                                  'Joined',
                                                   style: TextStyle(
                                                       fontWeight:
                                                           FontWeight.bold,
-                                                      color: Colors.white),
-                                                ),
-                                              )
-                                    : const Text('Full',
-                                        style: TextStyle(
-                                            color: Colors.red,
-                                            fontSize:
-                                                18)), // Show "Full" if no seats are left
-                              ),
-                            );
-                          }
-                        },
-                      );
-                    }
-                  },
-                );
+                                                      color: Colors.green,
+                                                      fontSize: 18),
+                                                )
+                                              : ElevatedButton(
+                                                  onPressed: () async {
+                                                    String? userName =
+                                                        await _getUserName(); // Get username for the confirmation
+                                                    if (mUserId != null &&
+                                                        userName != null) {
+                                                      _confirmJoinParty(
+                                                          party,
+                                                          userName,
+                                                          mUserId,
+                                                          parsedDateTime); // Confirm joining party
+                                                    } else {
+                                                      ScaffoldMessenger.of(
+                                                              context)
+                                                          .showSnackBar(
+                                                        const SnackBar(
+                                                          content: Text(
+                                                              'User not logged in. Please log in again.'),
+                                                        ),
+                                                      );
+                                                    }
+                                                  },
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                          backgroundColor:
+                                                              const Color(
+                                                                  0xff2226BA)),
+                                                  child: const Text(
+                                                    'Join',
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Colors.white),
+                                                  ),
+                                                )
+                                      : const Text('Full',
+                                          style: TextStyle(
+                                              color: Colors.red, fontSize: 18)),
+                                ),
+                              );
+                            }
+                          },
+                        );
+                      }
+                    });
               },
             );
           }
@@ -508,7 +534,8 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
     );
   }
 
-  Widget _buildDetailRowForLoc(String label, String value, VoidCallback onIconPressed) {
+  Widget _buildDetailRowForLoc(
+      String label, String value, VoidCallback onIconPressed) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
@@ -541,7 +568,10 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
           ),
           // Icon button placed on the right side
           IconButton(
-            style:ButtonStyle( backgroundColor: MaterialStatePropertyAll<Color>(Colors.grey[200]!),iconColor: MaterialStatePropertyAll<Color>(Color(0xff2226BA))),
+            style: ButtonStyle(
+                backgroundColor:
+                    MaterialStatePropertyAll<Color>(Colors.grey[200]!),
+                iconColor: MaterialStatePropertyAll<Color>(Color(0xff2226BA))),
             icon: const Icon(Icons.location_on_outlined),
             onPressed: onIconPressed,
           ),
@@ -551,7 +581,8 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
   }
 
   // Method to determine what widget to show based on partyStatus
-  Widget _buildStatusWidget(String partyStatus, Party party, BuildContext context, DateTime parsedDateTime) {
+  Widget _buildStatusWidget(String partyStatus, Party party,
+      BuildContext context, DateTime parsedDateTime) {
     // Define a common style for all buttons
     final buttonStyle = ElevatedButton.styleFrom(
       backgroundColor: const Color(0xff2226BA), // Button color
@@ -686,5 +717,50 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
       ),
     );
   }
+  double extractLatitude(String url) {
+    Uri uri = Uri.parse(url);
+    String queryParam = uri.queryParameters['query'] ?? '';
 
+    if (queryParam.isNotEmpty) {
+      List<String> coordinates = queryParam.split(',');
+
+      if (coordinates.length == 2) {
+        double latitude = double.parse(coordinates[0]);
+        double longitude = double.parse(coordinates[1]);
+
+        print('Latitude: $latitude');
+        print('Longitude: $longitude');
+        return latitude;
+      } else {
+        print('Invalid coordinates format');
+      }
+    } else {
+      return 0.0;
+      print('No coordinates found');
+    }
+    return 0.0;
+  }
+  double extractLongitutde(String url) {
+    Uri uri = Uri.parse(url);
+    String queryParam = uri.queryParameters['query'] ?? '';
+
+    if (queryParam.isNotEmpty) {
+      List<String> coordinates = queryParam.split(',');
+
+      if (coordinates.length == 2) {
+        double latitude = double.parse(coordinates[0]);
+        double longitude = double.parse(coordinates[1]);
+
+        print('Latitude: $latitude');
+        print('Longitude: $longitude');
+        return longitude;
+      } else {
+        print('Invalid coordinates format');
+      }
+    } else {
+      return 0.0;
+      print('No coordinates found');
+    }
+    return 0.0;
+  }
 }
