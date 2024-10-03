@@ -628,9 +628,6 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
         List<dynamic> predictions = json['predictions'];
         List<String> placeId = [];
         List<String> suggestions = [];
-        // List<String> suggestions = predictions
-        //     .map((prediction) => prediction['description'].toString())
-        //     .toList();
         for(var prediction in predictions){
           suggestions.add(prediction['description'].toString());
           placeId.add(prediction['place_id'].toString());

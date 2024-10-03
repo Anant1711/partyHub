@@ -38,6 +38,7 @@ class _ManageJoinRequestsScreenState extends State<ManageJoinRequestsScreen> {
     }else if(action == 'rejected'){
       debugPrint("Rejected: $requestId");
       partyService.deleteRequest(requestId);
+      await partyService.deleteFromPendingReq(partyId,userId);
     }
 
     setState(() {

@@ -33,8 +33,8 @@ class UserModel{
       'userID': userID,
       'name': name,
       'email': email,
-      'currentLat': currentLat,
-      'currentLong': currentLong,
+      'CurrentLat': currentLat,
+      'CurrentLong': currentLong,
       'phoneNumber':phoneNumber,
       'isPhoneNumberVerified': isPhoneNumberVerified,
     };
@@ -45,8 +45,8 @@ class UserModel{
       userID: map['userID'] as String? ?? '',
       name: map['name'] as String? ?? 'Unnamed Party',
       email: map['email'] as String? ?? '',
-      currentLat: map['currentLat'],
-      currentLong: map['currentLong'],
+      currentLat: map['CurrentLat'],
+      currentLong: map['CurrentLong'],
       phoneNumber: map['phoneNumber'] as String ?? 'Unknown Location',
       isPhoneNumberVerified: map['isPhoneNumberVerified'] as bool? ?? false,
     );
@@ -58,8 +58,8 @@ class UserModel{
       userID: map['userID'] as String? ?? '',
       name: map['name'] as String? ?? 'Unnamed Party',
       email: map['email'] as String? ?? '',
-      currentLat: map['currentLat'],
-      currentLong: map['currentLong'] ,
+      currentLat: map['CurrentLat'],
+      currentLong: map['CurrentLong'] ,
       phoneNumber: map['phoneNumber'] as String ?? 'Unknown Location',
       isPhoneNumberVerified: map['isPhoneNumberVerified'] as bool? ?? false,
     );

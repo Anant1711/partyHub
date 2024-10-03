@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 import 'package:uuid/uuid.dart';
 import '../models/joinRequestModel.dart';
 import '../services/UserService.dart';
@@ -16,7 +17,11 @@ class JoinPartyScreen extends StatefulWidget {
   double userLong = 0.0;
 
   JoinPartyScreen({super.key});
-  JoinPartyScreen.withLatLong(double this.userLat, double this.userLong);
+  JoinPartyScreen.withLatLong(double lat, double long){
+    this.userLat = lat;
+    this.userLong = long;
+    print("$userLat || $userLong");
+  }
 
   @override
   _JoinPartyScreenState createState() => _JoinPartyScreenState();
@@ -31,7 +36,7 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
   PartyService partyservice = new PartyService();
   late bool hasPendingRequest;
   Uuid uid = Uuid();
-  final double radiusKm = 50.0; // 50 Kilometers
+  final double radiusKm = 100.0; // 100 Kilometers
   //////////////////////////////// -Variables- ////////////////////////////////
 
   @override
@@ -48,8 +53,7 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
     return parties.where((party) => party.hostID != userId).toList();
   }
 
-  Future<void> _confirmJoinParty(Party party, String userName, String userId,
-      DateTime parsedDateTime) async {
+  Future<void> _confirmJoinParty(Party party, String userName, String userId, DateTime parsedDateTime) async {
     // Fetch all usernames for the attendees
     final usernames = await UserService().getAllUsernames(party.attendees);
 
@@ -322,6 +326,12 @@ class _JoinPartyScreenState extends State<JoinPartyScreen> {
   }
 
   Future<void> _openGoogleMapsLink(String url) async {
+    // Uri uri = Uri.parse(url);
+    // if (await canLaunchUrl(uri)) {
+    //   await launchUrl(uri);
+    // } else {
+    //   throw 'Could not open Google Maps link: $url';
+    // }
     if (await canLaunch(url)) {
       await launch(url);
     } else {

@@ -60,9 +60,9 @@ class UserService {
   }
 
   //Get party by ID
-  Future<UserModel?> getUserByIDFromFirebase(String partyID) async {
+  Future<UserModel?> getUserByIDFromFirebase(String userId) async {
     QuerySnapshot snapshot = await _firestore.collection('users')
-        .where('userID', isEqualTo: partyID)
+        .where('userID', isEqualTo: userId)
         .get();
 
     if (snapshot.docs.isNotEmpty) {
@@ -70,6 +70,7 @@ class UserService {
       DocumentSnapshot documentSnapshot = snapshot.docs.first;
 
       // Convert the document snapshot into a Party object
+      print("In UserService: ${UserModel.fromDocument(documentSnapshot)}");
       return UserModel.fromDocument(documentSnapshot);
     } else {
       // Return null if no documents were found

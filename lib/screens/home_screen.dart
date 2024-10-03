@@ -33,24 +33,35 @@ class _HomeScreenState extends State<HomeScreen> {
   ValueNotifier<String> _welcomeMessageNotifier =
       ValueNotifier<String>("Welcome to Party App!"); // Example notifier
   String _currentLocation =
-      "Set Location"; // Placeholder for the current location
+      "Set Location";
+
+  double mLongitude = 0.0; // Placeholder for the current location
+  double mLatitude = 0.0;
 
   @override
   void initState() {
     print("in init");
     super.initState();
+    fetchUserInfo();
     // Add a listener to the notifier
     _welcomeMessageNotifier.addListener(_onWelcomeMessageChange);
+
+
     if(widget.long == 0.0 && widget.lat == 0.0){
-      fetchUserInfo();
       _reverseGeocode(userModel.currentLat,userModel.currentLong);
+      mLatitude = userModel.currentLat;
+      mLongitude = userModel.currentLong;
+      print("mLongitude: $mLongitude");
     }else{
       _reverseGeocode(widget.lat,widget.long);
+      print("Widget lat: ${widget.lat}");
+      mLatitude = widget.lat;
+      mLongitude = widget.long;
     }
   }
 
   Future<void> fetchUserInfo() async {
-    print("Fetching from Firebase");
+    print("Fetching User from Firebase of UID: ${widget.mUid}");
     userModel = (await UserService().getUserByIDFromFirebase(widget.mUid))!;
   }
 
@@ -141,6 +152,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             _placeAutoComplete(value);
                             // Use setModalState to trigger a re-render inside the modal sheet
                             setModalState(() {});
+                            setState(() {
+
+                            });
                           },
                           textInputAction: TextInputAction.search,
                         ),
@@ -289,6 +303,9 @@ class _HomeScreenState extends State<HomeScreen> {
       'CurrentLat':position.latitude,
       'CurrentLong':position.longitude
     });
+    mLatitude = position.latitude;
+    mLongitude = position.longitude;
+
     _reverseGeocode(position.latitude, position.longitude);
     generateGoogleMapsLink(position.latitude, position.longitude);
   }
@@ -348,6 +365,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
         generateGoogleMapsLink(latitude, longitude);
         print("Lat: $latitude, Lng: $longitude");
+        FirebaseFirestore.instance
+            .collection('users')
+            .doc(userModel.userID)
+            .update({
+          'CurrentLat':latitude,
+          'CurrentLong':longitude
+        });
+        mLatitude = latitude;
+        mLongitude = longitude;
+        print("Lat: $mLatitude, Lng: $mLongitude");
+        print("Setting Mlat and Mlong values by searching location.");
       } else {
         print('Error fetching place details: ${json['status']}');
       }
@@ -366,7 +394,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 0:
         return _buildHomeContent(); // Main home screen content
       case 1:
-        return JoinPartyScreen(); // Create party screen
+        return JoinPartyScreen.withLatLong(mLatitude,mLongitude); // Create party screen
       case 2:
         return ProfileScreen(); // Join party screen
       default:
