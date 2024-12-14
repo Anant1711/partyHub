@@ -56,5 +56,8 @@ Efficiently select venues with:
 - **Authentication**: Google Firebase, GoogleSignIn API  
 - **APIs**: Google Places API  
 - **Storage**: Firebase Realtime Database  
-
 ---
+## **Preview**
+https://github.com/user-attachments/assets/a7de97ac-4d62-46cc-bf20-74abbe4f6802
+
+
